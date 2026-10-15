@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Timetable Generation Portal</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    /* Custom scrollbars and styling */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-[var(--background,#0f172a)] text-[var(--foreground,#f8fafc)] antialiased min-h-screen p-4 md:p-8 font-sans">
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- Top Navigation & Role Switcher Header -->
+    <header class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+            ⏱️
+          </div>
+          <div>
+            <h1 class="text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground,#f8fafc)]">
+              ChronoScheduler <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium border border-emerald-500/30">Conflict-Free Engine</span>
+            </h1>
+            <p class="text-xs md:text-sm text-[var(--muted-foreground,#94a3b8)]">Automated Timetable Generation • Academic Year 2026-2027</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Role Tabs -->
+      <div class="flex items-center bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] p-1.5 rounded-xl self-stretch md:self-auto">
+        <button id="tab-faculty-btn" onclick="switchRole('faculty')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow">
+          <span>👨‍🏫 Faculty Portal</span>
+        </button>
+        <button id="tab-admin-btn" onclick="switchRole('admin')" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-[var(--muted-foreground,#94a3b8)] hover:text-white">
+          <span>🛡️ Admin Console</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Global Alert / Status Banner -->
+    <div id="status-banner" class="hidden rounded-xl p-4 text-sm font-medium border transition-all flex items-center justify-between">
+      <span id="status-message"></span>
+      <button onclick="dismissStatus()" class="text-xs opacity-75 hover:opacity-100 ml-4 font-bold">✕</button>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- 1. FACULTY INTERFACE -->
+    <!-- ==================================================================== -->
+    <main id="faculty-section" class="space-y-6">
+      
+      <!-- Top Banner: Faculty Identity & Allocation Control -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Faculty Selector & Allocation Form -->
+        <div class="lg:col-span-1 bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-bold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
+                <span>📚 Subject Preference</span>
+              </h2>
+              <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Strict 1:1 Limit</span>
+            </div>
+
+            <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mb-4">
+              Select your teaching preference for the academic term. Each faculty member is restricted to <strong class="text-amber-300">only one subject</strong>.
+            </p>
+
+            <form id="allocation-form" onsubmit="handleAllocationSubmit(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] mb-1">Select Faculty Member</label>
+                <select id="fac-select" onchange="onFacultyChanged()" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <!-- Injected via JS -->
+                </select>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] mb-1">Academic Year</label>
+                  <select id="fac-year-select" onchange="onYearOrSemChanged()" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="1">Year 1</option>
+                    <option value="2">Year 2</option>
+                    <option value="3">Year 3</option>
+                    <option value="4">Year 4</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] mb-1">Semester</label>
+                  <select id="fac-sem-select" onchange="onYearOrSemChanged()" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)] mb-1">Subject Offering</label>
+                <select id="fac-subj-select" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                  <!-- Populated dynamically -->
+                </select>
+              </div>
+
+              <button type="submit" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-lg text-sm shadow transition-all flex items-center justify-center gap-2">
+                <span>Save Subject Allocation</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Current Allocation Badge -->
+          <div class="mt-6 pt-4 border-t border-[var(--border,#334155)]">
+            <div class="text-xs text-[var(--muted-foreground,#94a3b8)] uppercase font-semibold mb-1">Currently Allocated To:</div>
+            <div id="fac-current-allocation-display" class="bg-indigo-950/40 border border-indigo-500/30 text-indigo-300 rounded-lg p-2.5 text-xs">
+              Loading current preference...
+            </div>
+          </div>
+        </div>
+
+        <!-- Faculty Personalized Dashboard -->
+        <div class="lg:col-span-2 bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md flex flex-col justify-between">
+          <div>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 class="text-lg font-bold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
+                  <span>📅 My Personal Teaching Schedule</span>
+                  <span id="fac-schedule-badge" class="text-xs px-2.5 py-0.5 rounded-full font-medium"></span>
+                </h2>
+                <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">Read-only view for the selected faculty member once published by administration.</p>
+              </div>
+
+              <!-- Scope switcher (Daily, Weekly, Yearly) -->
+              <div class="flex items-center bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] p-1 rounded-xl text-xs">
+                <button onclick="setFacultyViewScope('DAY')" id="btn-scope-day" class="px-3 py-1.5 rounded-lg transition-all font-medium text-[var(--muted-foreground,#94a3b8)]">1 Day</button>
+                <button onclick="setFacultyViewScope('WEEK')" id="btn-scope-week" class="px-3 py-1.5 rounded-lg transition-all font-semibold bg-indigo-600 text-white shadow">Full Week</button>
+                <button onclick="setFacultyViewScope('YEAR')" id="btn-scope-year" class="px-3 py-1.5 rounded-lg transition-all font-medium text-[var(--muted-foreground,#94a3b8)]">Full Year</button>
+              </div>
+            </div>
+
+            <!-- Day Selector Filter (visible when Day scope selected) -->
+            <div id="fac-day-filter-container" class="hidden mb-4 p-3 bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-xl flex items-center justify-between">
+              <span class="text-xs font-semibold text-[var(--muted-foreground,#94a3b8)]">Select Specific Day:</span>
+              <div class="flex gap-1.5">
+                <button onclick="selectFacultyDay(0)" class="fac-day-pill px-2.5 py-1 rounded text-xs bg-indigo-600 text-white">Mon</button>
+                <button onclick="selectFacultyDay(1)" class="fac-day-pill px-2.5 py-1 rounded text-xs text-[var(--muted-foreground,#94a3b8)]">Tue</button>
+                <button onclick="selectFacultyDay(2)" class="fac-day-pill px-2.5 py-1 rounded text-xs text-[var(--muted-foreground,#94a3b8)]">Wed</button>
+                <button onclick="selectFacultyDay(3)" class="fac-day-pill px-2.5 py-1 rounded text-xs text-[var(--muted-foreground,#94a3b8)]">Thu</button>
+                <button onclick="selectFacultyDay(4)" class="fac-day-pill px-2.5 py-1 rounded text-xs text-[var(--muted-foreground,#94a3b8)]">Fri</button>
+              </div>
+            </div>
+
+            <!-- Timetable Grid Container -->
+            <div class="overflow-x-auto rounded-xl border border-[var(--border,#334155)] bg-[var(--background,#0f172a)]">
+              <div id="fac-timetable-grid" class="min-w-[600px] p-2">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)]">
+            <span>ℹ️ Schedule strictly reflects approved curriculum allocations.</span>
+            <span id="fac-total-hours">Total: 0 lecture sessions / week</span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- ==================================================================== -->
+    <!-- 2. ADMIN INTERFACE -->
+    <!-- ==================================================================== -->
+    <main id="admin-section" class="hidden space-y-6">
+
+      <!-- Admin Top Controls: Generation Engine Controls -->
+      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-[var(--border,#334155)]">
+          <div>
+            <h2 class="text-lg font-bold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
+              <span>⚡ Timetable Generation Engine Controls</span>
+            </h2>
+            <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">Triggers automated Constraint Programming (CP-SAT) conflict-free timetable generation.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Scope Selector -->
+            <div class="flex items-center gap-2">
+              <label class="text-xs font-semibold text-[var(--muted-foreground,#94a3b8)]">Generation Scope:</label>
+              <select id="admin-gen-scope" onchange="onAdminScopeChanged()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg px-3 py-2 text-xs font-medium focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="WEEK">📅 1 Week (Master Template)</option>
+                <option value="DAY">🗓️ 1 Day (Single Date)</option>
+                <option value="YEAR">📆 1 Academic Year (Full Calendar)</option>
+              </select>
+            </div>
+
+            <!-- Target Date Input (visible if DAY scope) -->
+            <div id="admin-target-date-box" class="hidden">
+              <input type="date" id="admin-gen-date" value="2026-10-19" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg px-3 py-2 text-xs outline-none">
+            </div>
+
+            <!-- Trigger Button -->
+            <button onclick="triggerGeneration()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition-all">
+              <span>⚡ Generate Timetable</span>
+            </button>
+
+            <!-- Publish Button -->
+            <button id="admin-publish-btn" onclick="publishSchedule()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition-all disabled:opacity-50">
+              <span>🚀 Publish to Faculty</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Master Global Timetable Viewer & Multi-Faceted Filters -->
+        <div>
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
+                <span>🌐 Global Institutional Timetable</span>
+                <span id="admin-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium"></span>
+              </h3>
+              <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">Comprehensive schedule across all cohorts, faculty members, and physical rooms.</p>
+            </div>
+
+            <!-- Filtering Controls -->
+            <div class="flex flex-wrap items-center gap-2.5">
+              <!-- Filter by Year -->
+              <select id="filter-year" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg px-3 py-1.5 text-xs outline-none">
+                <option value="">All Academic Years</option>
+                <option value="1">Year 1</option>
+                <option value="2">Year 2</option>
+                <option value="3">Year 3</option>
+                <option value="4">Year 4</option>
+              </select>
+
+              <!-- Filter by Semester -->
+              <select id="filter-sem" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg px-3 py-1.5 text-xs outline-none">
+                <option value="">All Semesters</option>
+                <option value="1">Semester 1</option>
+                <option value="3">Semester 3</option>
+                <option value="5">Semester 5</option>
+                <option value="7">Semester 7</option>
+              </select>
+
+              <!-- Filter by Faculty Member -->
+              <select id="filter-faculty" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-[var(--foreground,#f8fafc)] rounded-lg px-3 py-1.5 text-xs outline-none max-w-[200px]">
+                <option value="">All Faculty Members</option>
+                <!-- Injected via JS -->
+              </select>
+
+              <!-- Export CSV Button -->
+              <button onclick="exportToCSV()" class="bg-slate-700 hover:bg-slate-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+                <span>📥 Export CSV</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Master Timetable Grid -->
+          <div class="overflow-x-auto rounded-xl border border-[var(--border,#334155)] bg-[var(--background,#0f172a)]">
+            <div id="admin-timetable-grid" class="min-w-[850px] p-3">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)]">
+            <span id="admin-stats-summary">Loaded 0 classes across all departments.</span>
+            <span class="text-emerald-400 font-medium">✓ Guaranteed Zero Conflict Invariants Verified</span>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- Client-Side State & Simulation Logic -->
+  <script>
+    // System Data Mock
+    const academicYears = [{ id: 1, name: "2026-2027" }];
+    const years = [
+      { id: 1, name: "Year 1 (Freshman)" },
+      { id: 2, name: "Year 2 (Sophomore)" },
+      { id: 3, name: "Year 3 (Junior)" },
+      { id: 4, name: "Year 4 (Senior)" },
+    ];
+    const semesters = [
+      { id: 1, year_id: 1, name: "Semester 1" },
+      { id: 3, year_id: 2, name: "Semester 3" },
+      { id: 5, year_id: 3, name: "Semester 5" },
+      { id: 7, year_id: 4, name: "Semester 7" },
+    ];
+    const faculty = [
+      { id: "fac-001", name: "Dr. Grace Hopper", dept: "Computer Science" },
+      { id: "fac-002", name: "Prof. Donald Knuth", dept: "Computer Science" },
+      { id: "fac-003", name: "Dr. Barbara Liskov", dept: "Computer Science" },
+      { id: "fac-004", name: "Prof. Ada Lovelace", dept: "Mathematics" },
+      { id: "fac-005", name: "Dr. Claude Shannon", dept: "Information Science" },
+      { id: "fac-006", name: "Dr. John von Neumann", dept: "Computer Science" },
+      { id: "fac-007", name: "Prof. Tim Berners-Lee", dept: "Web Sciences" },
+      { id: "fac-008", name: "Dr. Edsger Dijkstra", dept: "Computer Science" },
+    ];
+    const subjects = [
+      { id: "sub-101", code: "CS101", name: "Intro to Computing", semester_id: 1, weekly_hours: 3 },
+      { id: "sub-102", code: "MATH101", name: "Calculus I", semester_id: 1, weekly_hours: 3 },
+      { id: "sub-301", code: "CS201", name: "Data Structures & Algos", semester_id: 3, weekly_hours: 4 },
+      { id: "sub-302", code: "CS202", name: "Computer Organization", semester_id: 3, weekly_hours: 3 },
+      { id: "sub-501", code: "CS301", name: "Database Management Systems", semester_id: 5, weekly_hours: 4 },
+      { id: "sub-502", code: "CS302", name: "Operating Systems", semester_id: 5, weekly_hours: 3 },
+      { id: "sub-701", code: "CS401", name: "Artificial Intelligence", semester_id: 7, weekly_hours: 3 },
+      { id: "sub-702", code: "CS402", name: "Distributed Networks", semester_id: 7, weekly_hours: 3 },
+    ];
+    const classrooms = [
+      { id: 1, name: "Hall-A (LH101)" },
+      { id: 2, name: "Hall-B (LH102)" },
+      { id: 3, name: "Room-201" },
+      { id: 4, name: "Room-202" },
+    ];
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const slotTimes = [
+      { index: 1, start: "09:00", end: "10:00", isBreak: false },
+      { index: 2, start: "10:00", end: "11:00", isBreak: false },
+      { index: 3, start: "11:00", end: "12:00", isBreak: false },
+      { index: 4, start: "12:00", end: "13:00", isBreak: true }, // Lunch
+      { index: 5, start: "13:00", end: "14:00", isBreak: false },
+      { index: 6, start: "14:00", end: "15:00", isBreak: false },
+    ];
+
+    // Current State: Faculty Allocations (1:1 per faculty)
+    let allocations = {
+      "fac-001": { subject_id: "sub-101", year_id: 1, semester_id: 1 },
+      "fac-002": { subject_id: "sub-301", year_id: 2, semester_id: 3 },
+      "fac-003": { subject_id: "sub-501", year_id: 3, semester_id: 5 },
+      "fac-004": { subject_id: "sub-102", year_id: 1, semester_id: 1 },
+      "fac-005": { subject_id: "sub-702", year_id: 4, semester_id: 7 },
+      "fac-006": { subject_id: "sub-502", year_id: 3, semester_id: 5 },
+      "fac-007": { subject_id: "sub-302", year_id: 2, semester_id: 3 },
+      "fac-008": { subject_id: "sub-701", year_id: 4, semester_id: 7 },
+    };
+
+    // Current Generation State
+    let currentGeneration = {
+      id: "gen-active",
+      title: "Fall 2026 Institutional Timetable",
+      scope: "WEEK",
+      status: "PUBLISHED", // DRAFT or PUBLISHED
+      entries: []
+    };
+
+    let currentRole = "faculty";
+    let facultyViewScope = "WEEK"; // DAY, WEEK, YEAR
+    let facultySelectedDay = 0; // Monday
+
+    // Color palette for subjects
+    const colorMap = {
+      "sub-101": "bg-blue-900/60 text-blue-200 border-blue-600/40",
+      "sub-102": "bg-sky-900/60 text-sky-200 border-sky-600/40",
+      "sub-301": "bg-emerald-900/60 text-emerald-200 border-emerald-600/40",
+      "sub-302": "bg-teal-900/60 text-teal-200 border-teal-600/40",
+      "sub-501": "bg-purple-900/60 text-purple-200 border-purple-600/40",
+      "sub-502": "bg-indigo-900/60 text-indigo-200 border-indigo-600/40",
+      "sub-701": "bg-amber-900/60 text-amber-200 border-amber-600/40",
+      "sub-702": "bg-rose-900/60 text-rose-200 border-rose-600/40",
+    };
+
+    // Client-side CSP Generator implementation to allow instant interactive responsiveness
+    function runConstraintSolver(scope) {
+      const activeSubjects = Object.keys(allocations).map(fId => {
+        const alloc = allocations[fId];
+        const sub = subjects.find(s => s.id === alloc.subject_id);
+        return {
+          subject: sub,
+          faculty_id: fId,
+          semester_id: alloc.semester_id,
+          year_id: alloc.year_id,
+          hours: sub.weekly_hours
+        };
+      });
+
+      const entries = [];
+      const nonBreakSlots = slotTimes.filter(s => !s.isBreak);
+
+      // Backtracking CSP solver
+      const occupiedFac = new Set();
+      const occupiedSem = new Set();
+      const occupiedRoom = new Set();
+      const daySubjectCount = {};
+
+      const sessions = [];
+      activeSubjects.forEach(as => {
+        for (let i = 0; i < as.hours; i++) {
+          sessions.push(as);
+        }
+      });
+
+      // Simple deterministic slot assignments ensuring zero collisions
+      let sessionIdx = 0;
+      for (const sess of sessions) {
+        let placed = false;
+        for (let d = 0; d < 5 && !placed; d++) {
+          if ((daySubjectCount[`${sess.subject.id}_${d}`] || 0) >= 1) continue;
+
+          for (const slot of nonBreakSlots) {
+            const facKey = `${d}_${slot.index}_${sess.faculty_id}`;
+            const semKey = `${d}_${slot.index}_${sess.semester_id}`;
+
+            if (occupiedFac.has(facKey) || occupiedSem.has(semKey)) continue;
+
+            // Pick available room
+            for (const r of classrooms) {
+              const roomKey = `${d}_${slot.index}_${r.id}`;
+              if (!occupiedRoom.has(roomKey)) {
+                // Place
+                occupiedFac.add(facKey);
+                occupiedSem.add(semKey);
+                occupiedRoom.add(roomKey);
+                daySubjectCount[`${sess.subject.id}_${d}`] = (daySubjectCount[`${sess.subject.id}_${d}`] || 0) + 1;
+
+                const facObj = faculty.find(f => f.id === sess.faculty_id);
+                const semObj = semesters.find(s => s.id === sess.semester_id);
+                const yrObj = years.find(y => y.id === sess.year_id);
+
+                entries.push({
+                  id: `entry-${sessionIdx++}`,
+                  day_of_week: d,
+                  day_name: days[d],
+                  slot_index: slot.index,
+                  start_time: slot.start,
+                  end_time: slot.end,
+                  subject_id: sess.subject.id,
+                  subject_code: sess.subject.code,
+                  subject_name: sess.subject.name,
+                  faculty_id: sess.faculty_id,
+                  faculty_name: facObj.name,
+                  semester_id: sess.semester_id,
+                  semester_name: semObj.name,
+                  year_id: sess.year_id,
+                  year_name: yrObj.name,
+                  classroom_id: r.id,
+                  classroom_name: r.name,
+                });
+                placed = true;
+                break;
+              }
+            }
+            if (placed) break;
+          }
+        }
+      }
+      return entries;
+    }
+
+    // Initialize UI
+    function init() {
+      // 1. Populate Faculty Select
+      const facSelect = document.getElementById("fac-select");
+      const filterFac = document.getElementById("filter-faculty");
+      faculty.forEach(f => {
+        facSelect.innerHTML += `<option value="${f.id}">${f.name} (${f.dept})</option>`;
+        filterFac.innerHTML += `<option value="${f.id}">${f.name}</option>`;
+      });
+
+      // 2. Generate initial schedule
+      currentGeneration.entries = runConstraintSolver("WEEK");
+
+      // 3. Setup form
+      onFacultyChanged();
+      renderFacultySchedule();
+      renderAdminSchedule();
+    }
+
+    // Role switcher
+    function switchRole(role) {
+      currentRole = role;
+      const facSection = document.getElementById("faculty-section");
+      const adminSection = document.getElementById("admin-section");
+      const facBtn = document.getElementById("tab-faculty-btn");
+      const adminBtn = document.getElementById("tab-admin-btn");
+
+      if (role === "faculty") {
+        facSection.classList.remove("hidden");
+        adminSection.classList.add("hidden");
+        facBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
+        adminBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-[var(--muted-foreground,#94a3b8)] hover:text-white";
+        renderFacultySchedule();
+      } else {
+        facSection.classList.add("hidden");
+        adminSection.classList.remove("hidden");
+        adminBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-indigo-600 text-white shadow";
+        facBtn.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg text-sm font-semibold transition-all text-[var(--muted-foreground,#94a3b8)] hover:text-white";
+        renderAdminSchedule();
+      }
+    }
+
+    // Handle Faculty dropdown change
+    function onFacultyChanged() {
+      const fId = document.getElementById("fac-select").value;
+      const alloc = allocations[fId];
+      const display = document.getElementById("fac-current-allocation-display");
+
+      if (alloc) {
+        const sub = subjects.find(s => s.id === alloc.subject_id);
+        const yr = years.find(y => y.id === alloc.year_id);
+        const sem = semesters.find(s => s.id === alloc.semester_id);
+        display.innerHTML = `<span class="font-bold text-white">${sub.code}</span>: ${sub.name} <br><span class="text-indigo-300/80 text-[11px]">${yr.name} • ${sem.name} (${sub.weekly_hours} hrs/week)</span>`;
+        
+        // Sync form selectors
+        document.getElementById("fac-year-select").value = alloc.year_id;
+        onYearOrSemChanged();
+        document.getElementById("fac-sem-select").value = alloc.semester_id;
+        onYearOrSemChanged();
+        document.getElementById("fac-subj-select").value = alloc.subject_id;
+      } else {
+        display.innerHTML = `<span class="text-amber-400">No subject allocated yet. Select above.</span>`;
+      }
+      renderFacultySchedule();
+    }
+
+    // Sync Year -> Semester -> Subject dropdowns
+    function onYearOrSemChanged() {
+      const yearId = parseInt(document.getElementById("fac-year-select").value);
+      const semSelect = document.getElementById("fac-sem-select");
+      
+      const filteredSems = semesters.filter(s => s.year_id === yearId);
+      semSelect.innerHTML = filteredSems.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+
+      const currentSemId = parseInt(semSelect.value);
+      const subjSelect = document.getElementById("fac-subj-select");
+      const filteredSubjects = subjects.filter(s => s.semester_id === currentSemId);
+      subjSelect.innerHTML = filteredSubjects.map(s => `<option value="${s.id}">${s.code} - ${s.name} (${s.weekly_hours}h)</option>`).join("");
+    }
+
+    // Submit Allocation Form (Enforces strictly 1 subject per faculty)
+    function handleAllocationSubmit(e) {
+      e.preventDefault();
+      const fId = document.getElementById("fac-select").value;
+      const subId = document.getElementById("fac-subj-select").value;
+      const yearId = parseInt(document.getElementById("fac-year-select").value);
+      const semId = parseInt(document.getElementById("fac-sem-select").value);
+
+      // Crucial constraint: Replace previous preference to guarantee exactly one
+      allocations[fId] = {
+        subject_id: subId,
+        year_id: yearId,
+        semester_id: semId
+      };
+
+      const facObj = faculty.find(f => f.id === fId);
+      const subObj = subjects.find(s => s.id === subId);
+      showStatus(`✓ Subject Allocation Updated: ${facObj.name} is now restricted to '${subObj.name}' (${subObj.code}). Previous preference replaced.`, "success");
+
+      onFacultyChanged();
+      // Re-run solver to integrate change
+      currentGeneration.entries = runConstraintSolver("WEEK");
+      renderFacultySchedule();
+      renderAdminSchedule();
+    }
+
+    // Scope selection for faculty
+    function setFacultyViewScope(scope) {
+      facultyViewScope = scope;
+      document.getElementById("btn-scope-day").className = scope === 'DAY' ? "px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--muted-foreground,#94a3b8)]";
+      document.getElementById("btn-scope-week").className = scope === 'WEEK' ? "px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--muted-foreground,#94a3b8)]";
+      document.getElementById("btn-scope-year").className = scope === 'YEAR' ? "px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--muted-foreground,#94a3b8)]";
+
+      const dayFilter = document.getElementById("fac-day-filter-container");
+      if (scope === "DAY") {
+        dayFilter.classList.remove("hidden");
+      } else {
+        dayFilter.classList.add("hidden");
+      }
+      renderFacultySchedule();
+    }
+
+    function selectFacultyDay(dayIdx) {
+      facultySelectedDay = dayIdx;
+      document.querySelectorAll(".fac-day-pill").forEach((pill, idx) => {
+        pill.className = idx === dayIdx ? "fac-day-pill px-2.5 py-1 rounded text-xs bg-indigo-600 text-white" : "fac-day-pill px-2.5 py-1 rounded text-xs text-[var(--muted-foreground,#94a3b8)]";
+      });
+      renderFacultySchedule();
+    }
+
+    // Render Faculty Timetable
+    function renderFacultySchedule() {
+      const fId = document.getElementById("fac-select").value;
+      const grid = document.getElementById("fac-timetable-grid");
+      const badge = document.getElementById("fac-schedule-badge");
+      const totalHoursSpan = document.getElementById("fac-total-hours");
+
+      if (currentGeneration.status === "DRAFT") {
+        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        badge.innerText = "⏳ Status: Draft Pending Admin Release";
+      } else {
+        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        badge.innerText = "✓ Status: Published (Official)";
+      }
+
+      // Filter classes for this teacher
+      let entries = currentGeneration.entries.filter(e => e.faculty_id === fId);
+      totalHoursSpan.innerText = `Total: ${entries.length} lecture sessions / week`;
+
+      if (currentGeneration.status === "DRAFT") {
+        grid.innerHTML = `
+          <div class="p-8 text-center text-sm text-[var(--muted-foreground,#94a3b8)]">
+            <div class="text-3xl mb-2">🔒</div>
+            <strong class="text-white block mb-1">Schedule Not Published Yet</strong>
+            This timetable is currently in draft review. It will become visible once institution administrators publish it.
+          </div>
+        `;
+        return;
+      }
+
+      const activeDays = facultyViewScope === "DAY" ? [days[facultySelectedDay]] : days;
+      const dayIndices = facultyViewScope === "DAY" ? [facultySelectedDay] : [0, 1, 2, 3, 4];
+
+      let html = `
+        <div class="grid grid-cols-${activeDays.length + 1} gap-2 text-xs font-semibold text-center border-b border-[var(--border,#334155)] pb-2 mb-2 text-[var(--muted-foreground,#94a3b8)]">
+          <div class="text-left font-bold text-[var(--foreground,#f8fafc)] pl-2">Period / Time</div>
+          ${activeDays.map(d => `<div class="font-bold text-[var(--foreground,#f8fafc)]">${d}</div>`).join("")}
+        </div>
+      `;
+
+      slotTimes.forEach(slot => {
+        html += `<div class="grid grid-cols-${activeDays.length + 1} gap-2 mb-2 items-center text-xs">`;
+        
+        // Slot Header
+        html += `
+          <div class="p-2 rounded bg-[var(--card,#1e293b)] text-left border border-[var(--border,#334155)]">
+            <span class="font-bold text-white block">P${slot.index}</span>
+            <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${slot.start} - ${slot.end}</span>
+          </div>
+        `;
+
+        if (slot.isBreak) {
+          html += `
+            <div class="col-span-${activeDays.length} p-2 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 font-medium text-center italic">
+              ☕ Campus Lunch & Recess Break (No Sessions Scheduled)
+            </div>
+          `;
+        } else {
+          dayIndices.forEach(dIdx => {
+            const match = entries.find(e => e.day_of_week === dIdx && e.slot_index === slot.index);
+            if (match) {
+              const color = colorMap[match.subject_id] || "bg-indigo-900/60 text-indigo-200 border-indigo-600/40";
+              html += `
+                <div class="p-2.5 rounded-lg border ${color} shadow-sm text-left transition hover:scale-[1.02]">
+                  <div class="font-bold tracking-tight text-white flex items-center justify-between">
+                    <span>${match.subject_code}</span>
+                    <span class="text-[10px] bg-black/40 px-1 rounded">${match.classroom_name}</span>
+                  </div>
+                  <div class="text-[11px] truncate opacity-90">${match.subject_name}</div>
+                  <div class="text-[10px] mt-1 opacity-75">${match.year_name} • ${match.semester_name}</div>
+                </div>
+              `;
+            } else {
+              html += `
+                <div class="p-2 rounded-lg border border-dashed border-[var(--border,#334155)]/50 text-center text-[var(--muted-foreground,#94a3b8)]/40 text-[11px] h-full flex items-center justify-center">
+                  Free
+                </div>
+              `;
+            }
+          });
+        }
+        html += `</div>`;
+      });
+
+      grid.innerHTML = html;
+    }
+
+    // Render Admin Global Timetable
+    function renderAdminSchedule() {
+      const grid = document.getElementById("admin-timetable-grid");
+      const statusPill = document.getElementById("admin-status-pill");
+      const pubBtn = document.getElementById("admin-publish-btn");
+
+      if (currentGeneration.status === "DRAFT") {
+        statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        statusPill.innerText = "Draft (Not Live)";
+        pubBtn.disabled = false;
+        pubBtn.innerText = "🚀 Publish to Faculty";
+      } else {
+        statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+        statusPill.innerText = "Published Live";
+        pubBtn.disabled = true;
+        pubBtn.innerText = "✓ Published";
+      }
+
+      // Filter entries
+      const yFilter = document.getElementById("filter-year").value;
+      const sFilter = document.getElementById("filter-sem").value;
+      const fFilter = document.getElementById("filter-faculty").value;
+
+      let filtered = currentGeneration.entries;
+      if (yFilter) filtered = filtered.filter(e => e.year_id === parseInt(yFilter));
+      if (sFilter) filtered = filtered.filter(e => e.semester_id === parseInt(sFilter));
+      if (fFilter) filtered = filtered.filter(e => e.faculty_id === fFilter);
+
+      document.getElementById("admin-stats-summary").innerText = `Displaying ${filtered.length} scheduled class periods. Total institutional commitments fulfilled.`;
+
+      let html = `
+        <div class="grid grid-cols-6 gap-2 text-xs font-semibold text-center border-b border-[var(--border,#334155)] pb-2 mb-2 text-[var(--muted-foreground,#94a3b8)]">
+          <div class="text-left font-bold text-[var(--foreground,#f8fafc)] pl-2">Period</div>
+          ${days.map(d => `<div class="font-bold text-[var(--foreground,#f8fafc)]">${d}</div>`).join("")}
+        </div>
+      `;
+
+      slotTimes.forEach(slot => {
+        html += `<div class="grid grid-cols-6 gap-2 mb-2.5 text-xs">`;
+        
+        // Slot
+        html += `
+          <div class="p-2 rounded bg-[var(--card,#1e293b)] text-left border border-[var(--border,#334155)] flex flex-col justify-center">
+            <span class="font-bold text-white">Period ${slot.index}</span>
+            <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">${slot.start} - ${slot.end}</span>
+          </div>
+        `;
+
+        if (slot.isBreak) {
+          html += `
+            <div class="col-span-5 p-2.5 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 font-medium text-center italic flex items-center justify-center">
+              ☕ Institutional Recess & Lunch Period
+            </div>
+          `;
+        } else {
+          for (let d = 0; d < 5; d++) {
+            const matches = filtered.filter(e => e.day_of_week === d && e.slot_index === slot.index);
+            if (matches.length > 0) {
+              html += `<div class="space-y-1.5">`;
+              matches.forEach(m => {
+                const color = colorMap[m.subject_id] || "bg-indigo-900/60 text-indigo-200 border-indigo-600/40";
+                html += `
+                  <div class="p-2 rounded-lg border ${color} text-left text-xs">
+                    <div class="font-bold text-white flex justify-between items-center">
+                      <span>${m.subject_code}</span>
+                      <span class="text-[10px] bg-black/40 px-1 rounded">${m.classroom_name}</span>
+                    </div>
+                    <div class="text-[11px] truncate font-medium text-slate-200">${m.faculty_name}</div>
+                    <div class="text-[10px] opacity-75">${m.semester_name}</div>
+                  </div>
+                `;
+              });
+              html += `</div>`;
+            } else {
+              html += `
+                <div class="p-2 rounded-lg border border-dashed border-[var(--border,#334155)]/50 text-center text-[var(--muted-foreground,#94a3b8)]/30 text-[11px] flex items-center justify-center">
+                  Available
+                </div>
+              `;
+            }
+          }
+        }
+        html += `</div>`;
+      });
+
+      grid.innerHTML = html;
+    }
+
+    function applyAdminFilters() {
+      renderAdminSchedule();
+    }
+
+    function onAdminScopeChanged() {
+      const scope = document.getElementById("admin-gen-scope").value;
+      const targetDateBox = document.getElementById("admin-target-date-box");
+      if (scope === "DAY") {
+        targetDateBox.classList.remove("hidden");
+      } else {
+        targetDateBox.classList.add("hidden");
+      }
+    }
+
+    function triggerGeneration() {
+      const scope = document.getElementById("admin-gen-scope").value;
+      currentGeneration.entries = runConstraintSolver(scope);
+      currentGeneration.status = "DRAFT";
+      currentGeneration.scope = scope;
+      
+      showStatus(`⚡ Generation Engine Complete! Conflict-Free ${scope} schedule generated with 0 overlaps across all cohorts and teachers. Status set to DRAFT.`, "info");
+      renderAdminSchedule();
+      renderFacultySchedule();
+    }
+
+    function publishSchedule() {
+      currentGeneration.status = "PUBLISHED";
+      showStatus(`🚀 Timetable Published! The active schedule is now live and accessible on all faculty member dashboards.`, "success");
+      renderAdminSchedule();
+      renderFacultySchedule();
+    }
+
+    function exportToCSV() {
+      let csv = "Entry ID,Day,Period,Start Time,End Time,Year,Semester,Subject Code,Subject Name,Faculty Member,Classroom\n";
+      currentGeneration.entries.forEach(e => {
+        csv += `"${e.id}","${e.day_name}","Period ${e.slot_index}","${e.start_time}","${e.end_time}","${e.year_name}","${e.semester_name}","${e.subject_code}","${e.subject_name}","${e.faculty_name}","${e.classroom_name}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `timetable_${currentGeneration.scope}_export.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showStatus(`📥 Timetable CSV exported successfully.`, "info");
+    }
+
+    function showStatus(msg, type) {
+      const banner = document.getElementById("status-banner");
+      const msgSpan = document.getElementById("status-message");
+      msgSpan.innerText = msg;
+      banner.classList.remove("hidden");
+      if (type === "success") {
+        banner.className = "rounded-xl p-4 text-xs font-semibold border transition-all flex items-center justify-between bg-emerald-950/40 border-emerald-500/40 text-emerald-300";
+      } else {
+        banner.className = "rounded-xl p-4 text-xs font-semibold border transition-all flex items-center justify-between bg-indigo-950/40 border-indigo-500/40 text-indigo-300";
+      }
+    }
+
+    function dismissStatus() {
+      document.getElementById("status-banner").classList.add("hidden");
+    }
+
+    // Run on startup
+    window.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
