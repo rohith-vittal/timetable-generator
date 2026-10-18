@@ -148,3 +148,64 @@ def test_admin_generation_publishing_and_section_filtering():
     assert csv_res.status_code == 200
     assert "Department,Section" in csv_res.text
     assert "Section A" in csv_res.text
+
+def test_auth_register_faculty_and_admin():
+    # 1. Register a new faculty member
+    fac_payload = {
+        "email": "sarah.connor@univ.edu",
+        "password": "facultysecure",
+        "full_name": "Dr. Sarah Connor",
+        "role": "FACULTY",
+        "department_id": 1,
+    }
+    res = client.post("/api/auth/register", json=fac_payload)
+    assert res.status_code == 201
+    data = res.json()
+    assert data["user"]["email"] == "sarah.connor@univ.edu"
+    assert data["user"]["role"] == "FACULTY"
+    assert data["user"]["department_code"] == "CSE"
+    assert "token" in data
+
+    # 2. Login with new faculty credentials
+    login_res = client.post("/api/auth/login", json={"email": "sarah.connor@univ.edu", "password": "facultysecure"})
+    assert login_res.status_code == 200
+    assert login_res.json()["user"]["full_name"] == "Dr. Sarah Connor"
+
+    # 3. Register a new Admin
+    admin_payload = {
+        "email": "admin.assistant@university.edu",
+        "password": "adminsecure",
+        "full_name": "Marcus Wright",
+        "role": "ADMIN",
+    }
+    admin_res = client.post("/api/auth/register", json=admin_payload)
+    assert admin_res.status_code == 201
+    assert admin_res.json()["user"]["role"] == "ADMIN"
+
+def test_auth_register_duplicate_email_fails():
+    payload = {
+        "email": "grace.hopper@univ.edu", # existing email
+        "password": "newpassword",
+        "full_name": "Dr. Duplicate Grace",
+        "role": "FACULTY",
+    }
+    res = client.post("/api/auth/register", json=payload)
+    assert res.status_code == 400
+    assert "already exists" in res.json()["detail"]
+
+def test_admin_bot_situational_generation():
+    bot_payload = {
+        "prompt": "Create an emergency timetable for tomorrow with 0 blank slots and balanced labs",
+        "target_date": "2026-10-19",
+    }
+    res = client.post("/api/admin/bot-generate", json=bot_payload)
+    assert res.status_code == 201
+    data = res.json()
+    assert "bot_message" in data
+    assert "ChronoBot" in data["bot_message"]
+    assert data["scope"] == "DAY"
+    assert data["insights"]["conflicts_detected"] == 0
+    assert data["insights"]["total_periods_scheduled"] > 0
+    assert data["insights"]["database_records_consulted"] > 0
+    assert len(data["generation"]["entries"]) > 0
+

@@ -1,31 +1,40 @@
-# Automated Timetable Generation Engine & API
+# Automated Timetable Generation Engine & Portal
 
-A full-stack, conflict-free automated scheduling system that generates academic timetables based on faculty availability, subjects, years, and semesters. Supports multi-scope generation: **1 Day**, **1 Week**, and **1 Academic Year**.
+A full-stack, conflict-free automated scheduling system that generates academic timetables across **multiple engineering departments (CSE, ECE, EEE, MECH)** and **6 distinct sections (Section A to Section F)**, supporting flexible time horizons (**1 Day**, **1 Week**, and **1 Academic Year**).
 
 ---
 
-## 🌟 Core Highlights & Architectural Features
+## 🌟 Key Features & Updates
 
-1. **Strict 1:1 Faculty-Subject Allocation**:
-   - Each faculty member is restricted to selecting exactly one subject per semester.
-   - Enforced at both the API level and the database schema level (`UNIQUE (faculty_id)` in `faculty_allocations`).
+### 1. Authentication & Role-Based Login
+- **Dual Role Portals**: Separate, secure experiences for **Faculty** and **Institution Administrators**.
+- **Login Modal & Endpoints**: API authentication at `/api/auth/login` and interactive frontend modal with pre-configured demo logins:
+  - 🛡️ **Admin**: `admin@university.edu` / `admin123` (Dr. Alan Turing, Dean)
+  - 👨‍🏫 **CSE Faculty**: `grace.hopper@univ.edu` / `faculty123` (Dr. Grace Hopper)
+  - 📡 **ECE Faculty**: `claude.shannon@univ.edu` / `faculty123` (Dr. Claude Shannon)
+  - ⚡ **EEE Faculty**: `nikola.tesla@univ.edu` / `faculty123` (Dr. Nikola Tesla)
+  - ⚙️ **MECH Faculty**: `james.watt@univ.edu` / `faculty123` (Dr. James Watt)
 
-2. **Constraint Programming Engine (CP-SAT & CSP)**:
-   - Uses Google OR-Tools CP-SAT (with a pure-Python MRV/Forward Checking backtracking fallback) to mathematically guarantee **zero scheduling conflicts**:
-     - **No Faculty Overlap**: A teacher is never assigned to two classes at the same time.
-     - **No Cohort/Semester Overlap**: Students in a given semester/year cannot have concurrent lectures.
-     - **No Classroom Double-Booking**: Physical rooms are mutually exclusive per time slot.
-     - **Break Slot Protection**: Lunch breaks and recess periods are strictly preserved.
-     - **Workload Spreading**: Lectures are balanced across weekdays (avoiding multi-class clumping).
+### 2. Admin Authority to Allocate Classes for Faculty & Sections
+- Institution administrators have complete authority to assign faculty members to specific **Departments**, **Years**, **Semesters**, **Subjects**, and **Sections**.
+- **Crucial Invariant**: Each faculty member is restricted to **exactly 1 subject**. Assigning a faculty to a new subject replaces their previous allocation.
 
-3. **Flexible Generation Scopes**:
-   - **1 Day**: Produces a conflict-free schedule for a specific date or day of the week.
-   - **1 Week**: Produces the canonical recurring master weekly template (Monday – Friday).
-   - **1 Year**: Projects the weekly master schedule across the full academic calendar year, tagging calendar dates and handling semester boundaries.
+### 3. Multi-Department & 6 Sections Architecture
+- **Departments Supported**:
+  - `CSE` (Computer Science & Engineering)
+  - `ECE` (Electronics & Communication Engineering)
+  - `EEE` (Electrical & Electronics Engineering)
+  - `MECH` (Mechanical Engineering)
+- **6 Sections Supported**: Section A, Section B, Section C, Section D, Section E, Section F.
+- **Section Cohort Constraint**: The Constraint Programming (CP-SAT) engine guarantees that students in a specific section (e.g., *ECE - Year 2 - Semester 3 - Section C*) are never scheduled for two classes simultaneously.
 
-4. **Role-Based Access Control (RBAC)**:
-   - **Faculty Dashboard**: Allows teachers to submit subject preferences (Year, Semester, Subject) and view their personalized read-only timetable once published.
-   - **Admin Control Panel**: Triggers automatic timetable generation with scope selection, filters master schedules by Year, Semester, and Faculty member, and exports schedules to CSV.
+### 4. Conflict-Free Constraint Programming Engine (CP-SAT)
+- Guarantees **0 collisions** across all:
+  1. **Faculty Overlaps**: No teacher assigned to 2 sections simultaneously.
+  2. **Section Overlaps**: No cohort assigned to 2 subjects in the same period.
+  3. **Classroom Overlaps**: No room double-booked.
+  4. **Lunch Break Integrity**: Reserved institutional break slot (Period 4) unassigned.
+  5. **Workload Spreading**: Lectures distributed across weekdays.
 
 ---
 
@@ -33,82 +42,49 @@ A full-stack, conflict-free automated scheduling system that generates academic 
 
 ```
 timetable-generator/
-├── schema.sql                 # Production PostgreSQL relational schema with composite constraints
+├── schema.sql                 # PostgreSQL relational schema (Depts, 6 Sections, Composite Constraints)
 └── backend/
     ├── requirements.txt       # Dependencies (FastAPI, Uvicorn, OR-Tools, Pydantic, Pytest)
-    ├── run.py                 # Quick-start script
+    ├── run.py                 # Server startup script
+    ├── static/
+    │   └── index.html         # Interactive Web Application UI
     ├── app/
-    │   ├── __init__.py
-    │   ├── main.py            # FastAPI entrypoint with CORS
-    │   ├── models.py          # Domain data models & Enums
-    │   ├── schemas.py         # Pydantic v2 validation models
-    │   ├── solver.py          # Core CP-SAT & Backtracking CSP Engine
-    │   ├── storage.py         # Relational data store enforcing 1:1 allocation
+    │   ├── main.py            # FastAPI entrypoint serving UI & API
+    │   ├── models.py          # Models: Department, Section, User, Subject, Allocation
+    │   ├── schemas.py         # Request/Response validation schemas & Auth
+    │   ├── solver.py          # CP-SAT & Backtracking CSP Engine (Multi-Dept & 6-Sec)
+    │   ├── storage.py         # In-memory store with relational integrity checks
     │   └── routers/
+    │       ├── auth.py        # Login & demo account endpoints
+    │       ├── admin.py       # Admin allocation authority, engine controls, multi-filters, CSV export
     │       ├── faculty.py     # Faculty allocation & personalized dashboard
-    │       ├── admin.py       # Admin generation, filtering, publishing, CSV export
-    │       └── metadata.py    # Form lookups for Years, Semesters, Subjects, Faculty
+    │       └── metadata.py    # Lookups for Depts, Sections, Years, Subjects, Faculty
     └── tests/
         ├── test_solver.py     # Algorithmic conflict-freedom & constraint tests
-        └── test_api.py        # REST API endpoint integration tests
+        └── test_api.py        # REST API endpoint & auth integration tests
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 How to Run & View the Application
 
-### 1. Prerequisites
-- Python 3.10+
-- (Optional) PostgreSQL 14+ (if deploying to production; the backend includes an out-of-the-box relational in-memory store for instant evaluation).
+### Option A: Open the Interactive UI Directly
+Double-click or open in your browser:
+* **[Interactive Portal Preview](file:///C:/Users/vitta/.gemini/antigravity/brain/4ce471c2-d38b-4eb5-bc9d-f4440f2d0ca6/app_preview.html)**
 
-### 2. Installation
-
-```bash
-cd backend
-python -m pip install -r requirements.txt
-```
-
-### 3. Run the Automated Tests
-
-Verify that all constraints, conflict resolution rules, and API endpoints are 100% compliant:
-
-```bash
-python -m pytest tests/ -v
-```
-
-### 4. Start the Backend API
-
-```bash
+### Option B: Run the Full-Stack Server
+```powershell
+cd C:\Users\vitta\.gemini\antigravity\scratch\timetable-generator\backend
 python run.py
 ```
 
-The server will start at `http://localhost:8000`.
-- **Interactive Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+Then visit:
+- **Interactive Web App**: [http://localhost:8000/](http://localhost:8000/)
+- **Swagger API Explorer**: [http://localhost:8000/docs](http://localhost:8000/docs)
 - **ReDoc Documentation**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
----
-
-## 📡 Key API Endpoints
-
-### Faculty Interface
-- `POST /api/faculty/allocate`: Submit subject preference (strictly validates 1 subject per teacher, matching Year & Semester).
-- `GET /api/faculty/allocation/{faculty_id}`: Inspect the faculty member's current single subject preference.
-- `GET /api/faculty/timetable/{faculty_id}`: Read-only personal schedule (supports filtering by `generation_id`, `view_date`, or `day_of_week`).
-
-### Admin Interface
-- `POST /api/admin/generate`: Triggers the scheduling engine with payload:
-  ```json
-  {
-    "title": "Fall 2026 Academic Timetable",
-    "scope": "WEEK", // Options: "DAY", "WEEK", "YEAR"
-    "academic_year_id": 1,
-    "target_date": "2026-10-19" // Required if scope is "DAY"
-  }
-  ```
-- `POST /api/admin/publish/{generation_id}`: Publishes the draft schedule to make it live for faculty dashboards.
-- `GET /api/admin/timetables`: Master global viewer with multi-criteria query parameters:
-  - `?year_id=1`
-  - `?semester_id=1`
-  - `?faculty_id=fac-001`
-  - `?day_of_week=0`
-- `GET /api/admin/timetables/{generation_id}/export`: Exports the timetable directly to CSV.
+### Run Tests
+```powershell
+python -m pytest tests/ -v
+```
+*(All 13 unit and integration tests verify 100% compliance).*

@@ -96,6 +96,8 @@ class TimetableEntryResponse(BaseModel):
     year_name: str
     classroom_id: int
     classroom_name: str
+    is_lab: bool = False
+    is_leisure: bool = False
 
 # -------------------------------------------------------------
 # Generation Details Response
@@ -126,3 +128,39 @@ class TimetableFilterParams(BaseModel):
     faculty_id: Optional[str] = None
     scope: Optional[ScheduleScope] = None
     calendar_date: Optional[str] = None
+
+# -------------------------------------------------------------
+# User Registration Schema
+# -------------------------------------------------------------
+class RegisterRequest(BaseModel):
+    email: str = Field(..., json_schema_extra={"example": "new.faculty@univ.edu"})
+    password: str = Field(..., json_schema_extra={"example": "faculty123"})
+    full_name: str = Field(..., json_schema_extra={"example": "Dr. Sarah Connor"})
+    role: UserRole = Field(default=UserRole.FACULTY, description="User role: 'FACULTY' or 'ADMIN'")
+    department_id: Optional[int] = Field(default=1, description="Department ID (1: CSE, 2: ECE, 3: EEE, 4: MECH)")
+
+# -------------------------------------------------------------
+# Bot Situational Timetable Creation Schemas
+# -------------------------------------------------------------
+class BotScenarioRequest(BaseModel):
+    prompt: str = Field(..., json_schema_extra={"example": "Create an emergency conflict-free schedule for tomorrow with 0 blank slots and balanced labs"})
+    scope: Optional[ScheduleScope] = Field(default=None, description="Optional override. Auto-detected from prompt if omitted.")
+    target_date: Optional[str] = Field(default=None, json_schema_extra={"example": "2026-10-19"}, description="Required if scope is DAY")
+    department_id: Optional[int] = Field(default=None, description="Optional department filter focus")
+
+class BotInsightMetrics(BaseModel):
+    total_periods_scheduled: int
+    total_cohorts: int
+    lab_sessions_count: int
+    leisure_sessions_count: int
+    conflicts_detected: int = 0
+    faculty_workload_hours_per_day: int = 3
+    database_records_consulted: int
+
+class BotScenarioResponse(BaseModel):
+    bot_message: str
+    scenario_identified: str
+    scope: ScheduleScope
+    generation: TimetableGenerationResponse
+    insights: BotInsightMetrics
+

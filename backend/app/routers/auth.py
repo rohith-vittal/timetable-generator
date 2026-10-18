@@ -2,10 +2,46 @@ from fastapi import APIRouter, HTTPException, status
 from typing import List
 import uuid
 
-from app.schemas import LoginRequest, LoginResponse, UserProfile
+from app.schemas import LoginRequest, LoginResponse, UserProfile, RegisterRequest
 from app.storage import db
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication & Access Control"])
+
+@router.post(
+    "/register",
+    response_model=LoginResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register New Faculty or Admin Account",
+    description="Registers a new user in the institutional database and returns their authenticated profile."
+)
+def register(payload: RegisterRequest):
+    try:
+        new_user = db.register_user(
+            email=payload.email,
+            password=payload.password,
+            full_name=payload.full_name,
+            role=payload.role,
+            department_id=payload.department_id,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+    token = f"tok-{new_user.role.lower()}-{uuid.uuid4().hex[:12]}"
+    db.active_sessions[token] = new_user
+    return LoginResponse(
+        token=token,
+        user=UserProfile(
+            id=new_user.id,
+            email=new_user.email,
+            full_name=new_user.full_name,
+            role=new_user.role,
+            department=new_user.department,
+            department_code=new_user.department_code,
+        )
+    )
 
 @router.post(
     "/login",
@@ -27,14 +63,16 @@ def login(payload: LoginRequest):
             detail="Invalid credentials. No user registered with this email address."
         )
 
-    # Check password
-    if matched_user.password != payload.password:
+    # Check password with PBKDF2 verification (DEF-005)
+    from app.storage import verify_password
+    if not verify_password(payload.password, matched_user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid password. Please check your credentials."
         )
 
     token = f"tok-{matched_user.role.lower()}-{uuid.uuid4().hex[:12]}"
+    db.active_sessions[token] = matched_user
 
     return LoginResponse(
         token=token,
@@ -66,3 +104,4 @@ def list_demo_accounts():
             "department_code": u.department_code,
         })
     return accounts
+

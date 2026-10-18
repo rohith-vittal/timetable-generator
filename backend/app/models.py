@@ -130,6 +130,8 @@ class TimetableEntry:
     year_name: str
     classroom_id: int
     classroom_name: str
+    is_lab: bool = False
+    is_leisure: bool = False
 
 @dataclass
 class TimetableGeneration:
