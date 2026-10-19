@@ -1,329 +1,550 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark-nebula">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Automated Timetable Generation Portal</title>
+  <title>ChronoScheduler Enterprise • Automated Timetable Generation Portal</title>
+  
+  <!-- Premium Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
-  <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.3); border-radius: 3px; }
 
-    /* Multi-Theme Design System */
+  <style>
+    /* ---------------------------------------------------------------------- */
+    /* 1. MULTI-THEME DESIGN SYSTEM (ENTERPRISE TOKENS)                      */
+    /* ---------------------------------------------------------------------- */
     :root, [data-theme="dark-nebula"] {
-      --background: #0f172a;
-      --foreground: #f8fafc;
-      --card: #1e293b;
-      --card-inner: #131d2e;
-      --border: #334155;
-      --muted-foreground: #94a3b8;
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-card: rgba(18, 26, 43, 0.75);
+      --bg-card-hover: rgba(25, 36, 58, 0.85);
+      --bg-card-solid: #111827;
+      --bg-elevated: #162035;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.16);
+      --border-glow: rgba(99, 102, 241, 0.35);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-faint: #64748b;
       --primary: #6366f1;
       --primary-hover: #4f46e5;
-    }
-    [data-theme="campus-ivory"] {
-      --background: #f1f5f9;
-      --foreground: #0f172a;
-      --card: #ffffff;
-      --card-inner: #f8fafc;
-      --border: #cbd5e1;
-      --muted-foreground: #475569;
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
-    }
-    [data-theme="ivy-emerald"] {
-      --background: #041d15;
-      --foreground: #ecfdf5;
-      --card: #083325;
-      --card-inner: #05241a;
-      --border: #165b46;
-      --muted-foreground: #6ee7b7;
-      --primary: #10b981;
-      --primary-hover: #059669;
-    }
-    [data-theme="cyber-indigo"] {
-      --background: #070716;
-      --foreground: #e0e7ff;
-      --card: #11112b;
-      --card-inner: #0b0b1e;
-      --border: #29285e;
-      --muted-foreground: #a5b4fc;
-      --primary: #8b5cf6;
-      --primary-hover: #7c3aed;
+      --primary-glow: rgba(99, 102, 241, 0.28);
+      --accent: #8b5cf6;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.12);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.12);
+      --danger: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.12);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+      --shadow-lg: 0 16px 36px -8px rgba(0, 0, 0, 0.65);
+      --glow-halo: radial-gradient(800px circle at top center, rgba(99, 102, 241, 0.12), transparent 70%);
+      --glass-blur: blur(16px);
     }
 
-    /* Light Mode Contrast Adjustments */
+    [data-theme="campus-ivory"] {
+      --bg-base: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.92);
+      --bg-card-hover: #ffffff;
+      --bg-card-solid: #ffffff;
+      --bg-elevated: #f1f5f9;
+      --border-subtle: rgba(15, 23, 42, 0.09);
+      --border-strong: rgba(15, 23, 42, 0.18);
+      --border-glow: rgba(79, 70, 229, 0.25);
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-faint: #94a3b8;
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-glow: rgba(79, 70, 229, 0.18);
+      --accent: #7c3aed;
+      --success: #059669;
+      --success-bg: rgba(5, 150, 105, 0.1);
+      --warning: #d97706;
+      --warning-bg: rgba(217, 119, 6, 0.1);
+      --danger: #e11d48;
+      --danger-bg: rgba(225, 29, 72, 0.1);
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --shadow-md: 0 6px 18px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 14px 30px -4px rgba(15, 23, 42, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+      --glow-halo: radial-gradient(800px circle at top center, rgba(79, 70, 229, 0.06), transparent 70%);
+      --glass-blur: blur(16px);
+    }
+
+    [data-theme="ivy-emerald"] {
+      --bg-base: #04140f;
+      --bg-surface: #07221a;
+      --bg-card: rgba(8, 38, 29, 0.82);
+      --bg-card-hover: rgba(12, 51, 39, 0.9);
+      --bg-card-solid: #092c21;
+      --bg-elevated: #0f3a2c;
+      --border-subtle: rgba(52, 211, 153, 0.14);
+      --border-strong: rgba(52, 211, 153, 0.26);
+      --border-glow: rgba(16, 185, 129, 0.38);
+      --text-main: #ecfdf5;
+      --text-muted: #6ee7b7;
+      --text-faint: #34d399;
+      --primary: #10b981;
+      --primary-hover: #059669;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --accent: #047857;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.15);
+      --danger: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+      --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 16px 36px -8px rgba(0, 0, 0, 0.7);
+      --glow-halo: radial-gradient(800px circle at top center, rgba(16, 185, 129, 0.12), transparent 70%);
+      --glass-blur: blur(16px);
+    }
+
+    [data-theme="cyber-indigo"] {
+      --bg-base: #060612;
+      --bg-surface: #0c0c22;
+      --bg-card: rgba(16, 16, 42, 0.85);
+      --bg-card-hover: rgba(24, 24, 62, 0.92);
+      --bg-card-solid: #11112e;
+      --bg-elevated: #181840;
+      --border-subtle: rgba(168, 85, 247, 0.16);
+      --border-strong: rgba(168, 85, 247, 0.3);
+      --border-glow: rgba(139, 92, 246, 0.45);
+      --text-main: #f5f3ff;
+      --text-muted: #c4b5fd;
+      --text-faint: #8b5cf6;
+      --primary: #8b5cf6;
+      --primary-hover: #7c3aed;
+      --primary-glow: rgba(139, 92, 246, 0.3);
+      --accent: #06b6d4;
+      --success: #10b981;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.15);
+      --danger: #f43f5e;
+      --danger-bg: rgba(244, 63, 94, 0.15);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+      --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 16px 36px -8px rgba(0, 0, 0, 0.8);
+      --glow-halo: radial-gradient(800px circle at top center, rgba(139, 92, 246, 0.15), transparent 70%);
+      --glass-blur: blur(16px);
+    }
+
+    /* ---------------------------------------------------------------------- */
+    /* 2. BASE STYLING & LUXURY ELEVATIONS                                    */
+    /* ---------------------------------------------------------------------- */
+    * {
+      box-sizing: border-box;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      background-image: var(--glow-halo);
+      background-attachment: fixed;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      letter-spacing: -0.015em;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(150, 150, 150, 0.25); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(150, 150, 150, 0.4); }
+
+    .glass-panel {
+      background: var(--bg-card);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-md);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .glass-panel:hover {
+      border-color: var(--border-strong);
+    }
+
+    .glass-input {
+      background: var(--bg-surface) !important;
+      color: var(--text-main) !important;
+      border: 1px solid var(--border-subtle) !important;
+      transition: all 0.15s ease;
+    }
+
+    .glass-input:focus {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 3px var(--primary-glow) !important;
+    }
+
+    /* Campus Ivory / Light theme text clarity */
     [data-theme="campus-ivory"] .text-white {
       color: #0f172a !important;
-    }
-    [data-theme="campus-ivory"] select,
-    [data-theme="campus-ivory"] input,
-    [data-theme="campus-ivory"] textarea {
-      background-color: #ffffff !important;
-      color: #0f172a !important;
-      border-color: #cbd5e1 !important;
-    }
-    [data-theme="campus-ivory"] .bg-slate-900,
-    [data-theme="campus-ivory"] .bg-slate-800 {
-      background-color: #e2e8f0 !important;
-      color: #0f172a !important;
-    }
-    [data-theme="campus-ivory"] .hover\:bg-slate-800\/60:hover {
-      background-color: #f1f5f9 !important;
-    }
-    [data-theme="campus-ivory"] .text-slate-300,
-    [data-theme="campus-ivory"] .text-slate-400 {
-      color: #475569 !important;
     }
     [data-theme="campus-ivory"] .text-slate-200 {
       color: #1e293b !important;
     }
+    [data-theme="campus-ivory"] .text-slate-300 {
+      color: #334155 !important;
+    }
+    [data-theme="campus-ivory"] .text-slate-400 {
+      color: #64748b !important;
+    }
+    [data-theme="campus-ivory"] .bg-slate-900,
+    [data-theme="campus-ivory"] .bg-slate-800,
+    [data-theme="campus-ivory"] .bg-slate-950 {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+    [data-theme="campus-ivory"] .border-slate-800,
+    [data-theme="campus-ivory"] .border-slate-700 {
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="campus-ivory"] .hover\:bg-slate-800\/60:hover {
+      background-color: #f8fafc !important;
+    }
+
+    /* Subtle pulsing glow for AI and Engine badges */
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.02); }
+    }
+    .animate-subtle-pulse {
+      animation: subtlePulse 3s ease-in-out infinite;
+    }
   </style>
 </head>
-<body class="bg-[var(--background,#0f172a)] text-[var(--foreground,#f8fafc)] antialiased min-h-screen p-4 md:p-8 font-sans">
+<body class="min-h-screen p-3 sm:p-5 md:p-8 antialiased selection:bg-indigo-500 selection:text-white">
 
-  <div class="max-w-7xl mx-auto space-y-6">
+  <!-- ==================================================================== -->
+  <!-- FLOATING EXECUTIVE NOTIFICATION TOAST                                -->
+  <!-- ==================================================================== -->
+  <div id="status-toast" class="fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none">
+    <div class="flex items-start gap-3">
+      <div id="toast-icon-box" class="h-8 w-8 rounded-xl bg-white/10 flex items-center justify-center font-bold text-sm shrink-0">
+        <span id="toast-icon">✨</span>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h4 id="toast-title" class="text-xs font-bold uppercase tracking-wider">System Update</h4>
+        <p id="toast-message" class="text-xs mt-0.5 leading-relaxed break-words font-medium"></p>
+      </div>
+      <button onclick="dismissStatus()" class="text-xs opacity-60 hover:opacity-100 transition-opacity p-1 font-bold">✕</button>
+    </div>
+  </div>
+
+  <div class="max-w-[1440px] mx-auto space-y-6">
 
     <!-- ==================================================================== -->
-    <!-- 0. AUTHENTICATION & TOP BAR -->
+    <!-- 0. ENTERPRISE APP BAR (HEADER & COMMAND NAVIGATION)                   -->
     <!-- ==================================================================== -->
-    <header class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="h-11 w-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-2xl shadow-md">
-          ⏱️
+    <header class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 sticky top-3 z-40">
+      
+      <!-- Left: Institutional Branding -->
+      <div class="flex items-center gap-3.5">
+        <div class="relative group">
+          <div class="absolute -inset-1 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-2xl blur-sm opacity-70 group-hover:opacity-100 transition duration-300"></div>
+          <div class="relative h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-xl border border-white/20">
+            ⏱️
+          </div>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground,#f8fafc)]">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span class="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-indigo-200 bg-clip-text text-transparent">
               ChronoScheduler
-            </h1>
-            <span class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium border border-emerald-500/30">
+            </span>
+            <span class="text-[10px] uppercase font-bold tracking-widest px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+              Enterprise v2.5
+            </span>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 flex items-center gap-1.5">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               Conflict-Free Engine
             </span>
           </div>
-          <p class="text-xs md:text-sm text-[var(--muted-foreground,#94a3b8)]">
-            Academic Schedule: 09:20 - 16:10 • Lunch 12:20 - 13:10 • 1 hr Classes • 6 Sections (A-F) • CSE, ECE, EEE, MECH
+          <p class="text-xs text-[var(--text-muted)] mt-0.5">
+            Academic Window: <span class="font-mono font-medium text-[var(--text-main)]">09:20 - 16:10</span> • Lunch <span class="font-mono font-medium text-[var(--text-main)]">12:20 - 13:10</span> • 6 Sections (A-F) • CSE, ECE, EEE, MECH
           </p>
         </div>
       </div>
 
-      <!-- Navigation Tabs: Login, Admin, Faculty -->
-      <nav class="flex items-center gap-1.5 bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] p-1 rounded-xl text-xs">
-        <button id="nav-btn-auth" onclick="switchMainView('AUTH')" class="px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-1.5">
-          <span>🔐 Login / Register</span>
+      <!-- Center: Segmented Navigation Pills -->
+      <nav class="flex items-center p-1 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] self-start xl:self-center text-xs font-semibold shadow-inner">
+        <button id="nav-btn-auth" onclick="switchMainView('AUTH')" class="px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5">
+          <span>🔐 Sign In / Register</span>
         </button>
-        <button id="nav-btn-admin" onclick="switchMainView('ADMIN')" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
+        <button id="nav-btn-admin" onclick="switchMainView('ADMIN')" class="px-3.5 py-2 rounded-lg font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 flex items-center gap-1.5">
           <span>🛡️ Admin Portal</span>
         </button>
-        <button id="nav-btn-faculty" onclick="switchMainView('FACULTY')" class="px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition-all flex items-center gap-1.5">
+        <button id="nav-btn-faculty" onclick="switchMainView('FACULTY')" class="px-3.5 py-2 rounded-lg font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 flex items-center gap-1.5">
           <span>👨‍🏫 Faculty Portal</span>
         </button>
       </nav>
 
-      <!-- Theme Switcher Selector -->
-      <div class="flex items-center gap-1.5 bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] px-2.5 py-1.5 rounded-xl text-xs">
-        <span class="text-sm">🎨</span>
-        <select id="theme-selector" onchange="applyTheme(this.value)" class="bg-transparent text-[var(--foreground,#f8fafc)] font-medium outline-none cursor-pointer text-xs">
-          <option value="dark-nebula" class="bg-slate-900 text-white">Dark Nebula 🌌</option>
-          <option value="campus-ivory" class="bg-slate-900 text-white">Campus Ivory 🏛️</option>
-          <option value="ivy-emerald" class="bg-slate-900 text-white">Ivy Emerald 🌿</option>
-          <option value="cyber-indigo" class="bg-slate-900 text-white">Cyber Indigo ⚡</option>
-        </select>
-      </div>
-
-      <!-- User Session Info / Role Control -->
-      <div id="auth-header-bar" class="flex items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
-        <div id="user-badge" class="flex items-center gap-2.5 bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] px-3 py-1.5 rounded-xl text-xs">
-          <span id="user-status-dot" class="h-2 w-2 rounded-full bg-slate-500"></span>
-          <span id="current-user-name" class="font-semibold text-white">Guest</span>
-          <span id="current-user-role-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-700 text-slate-300">Logged Out</span>
+      <!-- Right: Theme Switcher & Active User Session -->
+      <div class="flex items-center gap-3 justify-between xl:justify-end flex-wrap">
+        
+        <!-- Theme Selector -->
+        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs">
+          <span class="text-sm">🎨</span>
+          <select id="theme-selector" onchange="applyTheme(this.value)" class="bg-transparent text-[var(--text-main)] font-semibold outline-none cursor-pointer text-xs">
+            <option value="dark-nebula" class="bg-slate-900 text-white">Dark Nebula 🌌</option>
+            <option value="campus-ivory" class="bg-slate-900 text-white">Campus Ivory 🏛️</option>
+            <option value="ivy-emerald" class="bg-slate-900 text-white">Ivy Emerald 🌿</option>
+            <option value="cyber-indigo" class="bg-slate-900 text-white">Cyber Indigo ⚡</option>
+          </select>
         </div>
-        <button id="auth-action-btn" onclick="handleAuthActionBtn()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow transition-all">
+
+        <!-- User Profile Pill -->
+        <div id="user-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs">
+          <span id="user-status-dot" class="h-2 w-2 rounded-full bg-slate-500"></span>
+          <span id="current-user-name" class="font-bold text-[var(--text-main)] max-w-[140px] truncate">Guest</span>
+          <span id="current-user-role-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300">Logged Out</span>
+        </div>
+
+        <!-- Auth Action Button -->
+        <button id="auth-action-btn" onclick="handleAuthActionBtn()" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
           Sign In
         </button>
       </div>
     </header>
 
-    <!-- Global Alert / Status Banner -->
-    <div id="status-banner" class="hidden rounded-xl p-4 text-xs font-semibold border transition-all flex items-center justify-between shadow-md">
+    <!-- Legacy Status Banner fallback placeholder for DOM safety -->
+    <div id="status-banner" class="hidden">
       <span id="status-message"></span>
-      <button onclick="dismissStatus()" class="text-xs opacity-75 hover:opacity-100 ml-4 font-bold">✕</button>
-    </div>
-
-    <!-- Academic Regulation Badge Strip -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-3 flex items-center gap-2.5">
-        <span class="text-xl">⏰</span>
-        <div>
-          <strong class="block text-white">09:20 - 16:10</strong>
-          <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">6 Periods (1 hr each) • Lunch 12:20-13:10</span>
-        </div>
-      </div>
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-3 flex items-center gap-2.5">
-        <span class="text-xl">🔬</span>
-        <div>
-          <strong class="block text-white">Daily Lab Guaranteed</strong>
-          <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">At least 1 lab session (2h or 3h) every day</span>
-        </div>
-      </div>
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-3 flex items-center gap-2.5">
-        <span class="text-xl">⚽</span>
-        <div>
-          <strong class="block text-white">2 Days Last Hr Leisure</strong>
-          <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">15:10 - 16:10 Leisure / Sports / Library</span>
-        </div>
-      </div>
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl p-3 flex items-center gap-2.5">
-        <span class="text-xl">⚖️</span>
-        <div>
-          <strong class="block text-white">Faculty Load: 3 Hrs/Day</strong>
-          <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)]">3 classes, 3h lab, or 2h lab + 1h class</span>
-        </div>
-      </div>
     </div>
 
     <!-- ==================================================================== -->
-    <!-- AUTHENTICATION PAGE: LOGIN & REGISTRATION INTERFACES -->
+    <!-- 0.B ACADEMIC REGULATION METRIC TILES                                 -->
     <!-- ==================================================================== -->
-    <main id="auth-section" class="max-w-2xl mx-auto space-y-6 py-4">
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      
+      <!-- Regulation 1: Time Bracket -->
+      <div class="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border-l-4 border-l-indigo-500">
+        <div class="h-11 w-11 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl shrink-0">
+          ⏰
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <strong class="text-sm font-bold text-[var(--text-main)] font-mono">09:20 — 16:10</strong>
+            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300">6 Periods</span>
+          </div>
+          <span class="text-xs text-[var(--text-muted)] block mt-0.5">Exactly 1h duration • Lunch 12:20 - 13:10</span>
+        </div>
+      </div>
 
-      <!-- Authentication Hero Banner -->
+      <!-- Regulation 2: Daily Lab Guaranteed -->
+      <div class="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border-l-4 border-l-emerald-500">
+        <div class="h-11 w-11 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl shrink-0">
+          🔬
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <strong class="text-sm font-bold text-[var(--text-main)]">Daily Lab Guaranteed</strong>
+            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">Active</span>
+          </div>
+          <span class="text-xs text-[var(--text-muted)] block mt-0.5">Every cohort has at least 1 lab session (2h/3h)</span>
+        </div>
+      </div>
+
+      <!-- Regulation 3: Period 6 Leisure -->
+      <div class="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border-l-4 border-l-amber-500">
+        <div class="h-11 w-11 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl shrink-0">
+          ⚽
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <strong class="text-sm font-bold text-[var(--text-main)]">2 Days Last Hr Leisure</strong>
+            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">Wellness</span>
+          </div>
+          <span class="text-xs text-[var(--text-muted)] block mt-0.5">Period 6 (15:10 - 16:10) Sports & Central Library</span>
+        </div>
+      </div>
+
+      <!-- Regulation 4: Faculty Load Cap -->
+      <div class="glass-panel rounded-2xl p-4 flex items-center gap-3.5 border-l-4 border-l-violet-500">
+        <div class="h-11 w-11 rounded-xl bg-violet-500/10 text-violet-400 border border-violet-500/20 flex items-center justify-center text-xl shrink-0">
+          ⚖️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <strong class="text-sm font-bold text-[var(--text-main)]">Faculty Load: 3 Hrs/Day</strong>
+            <span class="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-violet-500/20 text-violet-300">100% Filled</span>
+          </div>
+          <span class="text-xs text-[var(--text-muted)] block mt-0.5">Strictly 3 classes, 3h lab, or 2h lab + 1h class</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================================================================== -->
+    <!-- 1. AUTHENTICATION EXPERIENCE (LOGIN & REGISTRATION)                   -->
+    <!-- ==================================================================== -->
+    <main id="auth-section" class="max-w-2xl mx-auto space-y-6 py-6">
+      
+      <!-- Hero Welcome -->
       <div class="text-center space-y-2">
-        <div class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white text-3xl shadow-xl shadow-indigo-500/20 mb-2">
+        <div class="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 text-white text-2xl shadow-xl shadow-indigo-500/25 mb-1 animate-subtle-pulse">
           🔐
         </div>
-        <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
-          University Academic Portal Sign In
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-[var(--text-main)] tracking-tight">
+          University Academic Portal Access
         </h2>
-        <p class="text-xs md:text-sm text-[var(--muted-foreground,#94a3b8)] max-w-lg mx-auto">
+        <p class="text-xs sm:text-sm text-[var(--text-muted)] max-w-lg mx-auto">
           Automated Conflict-Free Timetable Generation System. Sign in to access faculty preferences or administrator scheduling controls.
         </p>
       </div>
 
-      <!-- Main Auth Card -->
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 md:p-8 shadow-2xl space-y-6">
+      <!-- Authentication Card -->
+      <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
         
-        <!-- ================================================================ -->
-        <!-- VIEW 1: SIGN IN INTERFACE (FACULTY & ADMIN TABS) -->
-        <!-- ================================================================ -->
+        <!-- ------------------------------------------------------------------ -->
+        <!-- VIEW 1.A: SIGN IN INTERFACE                                        -->
+        <!-- ------------------------------------------------------------------ -->
         <div id="auth-view-login" class="space-y-5">
-          <div class="flex items-center justify-between pb-3 border-b border-[var(--border,#334155)]">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
             <div class="flex items-center gap-2">
-              <span class="text-xl">🚪</span>
-              <h3 class="text-base font-bold text-white">Select Your Role to Sign In</h3>
+              <span class="text-lg">🚪</span>
+              <h3 class="text-sm font-bold text-[var(--text-main)] uppercase tracking-wider">Select Role to Sign In</h3>
             </div>
-            <span class="text-xs text-indigo-400 font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">Official Access</span>
+            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              Institutional Pass
+            </span>
           </div>
 
-          <!-- Role Switcher Tabs for Sign In -->
-          <div class="grid grid-cols-2 p-1 bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] rounded-xl text-xs font-semibold">
-            <button type="button" id="tab-login-faculty" onclick="setLoginRoleTab('FACULTY')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center justify-center gap-2">
+          <!-- Role Toggle Buttons -->
+          <div class="grid grid-cols-2 p-1.5 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-bold gap-1 shadow-inner">
+            <button type="button" id="tab-login-faculty" onclick="setLoginRoleTab('FACULTY')" class="py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all flex items-center justify-center gap-2">
               <span class="text-base">👨‍🏫</span>
               <span>Faculty Member</span>
             </button>
-            <button type="button" id="tab-login-admin" onclick="setLoginRoleTab('ADMIN')" class="py-2.5 rounded-lg text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2">
+            <button type="button" id="tab-login-admin" onclick="setLoginRoleTab('ADMIN')" class="py-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex items-center justify-center gap-2">
               <span class="text-base">🛡️</span>
               <span>Administrator</span>
             </button>
           </div>
 
-          <div id="login-role-alert" class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-indigo-200 text-xs flex items-start gap-2">
-            <span class="text-base">ℹ️</span>
-            <p id="login-role-description" class="leading-relaxed">
+          <!-- Role Explainer Alert -->
+          <div id="login-role-alert" class="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-start gap-2.5">
+            <span class="text-base shrink-0 mt-0.5">ℹ️</span>
+            <p id="login-role-description" class="leading-relaxed font-medium">
               Sign in as a faculty member to select semester subjects and view your personal 3-hour daily timetable.
             </p>
           </div>
 
-          <!-- Login Form -->
+          <!-- Sign In Form -->
           <form id="login-form" onsubmit="handleManualLogin(event)" class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Institutional Email Address</label>
-              <input type="email" id="login-email" required placeholder="grace.hopper@univ.edu" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Institutional Email</label>
+              <input type="email" id="login-email" required placeholder="grace.hopper@univ.edu" class="glass-input w-full rounded-xl p-3 text-sm outline-none">
             </div>
             <div>
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Password</label>
-              <input type="password" id="login-password" required placeholder="••••••••" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Password</label>
+              <input type="password" id="login-password" required placeholder="••••••••" class="glass-input w-full rounded-xl p-3 text-sm outline-none">
             </div>
-            <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2">
+            <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl text-sm shadow-xl shadow-indigo-600/30 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
               <span>Sign In to Account 🚀</span>
             </button>
           </form>
 
-          <!-- Quick 1-Click Demo Logins -->
-          <div class="pt-4 border-t border-[var(--border,#334155)] space-y-2.5">
-            <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground,#94a3b8)]">Quick Demo 1-Click Logins:</div>
+          <!-- Quick 1-Click Persona Chips -->
+          <div class="pt-4 border-t border-[var(--border-subtle)] space-y-2.5">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Quick 1-Click Demo Profiles:</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <button onclick="quickLogin('admin@university.edu', 'admin123', 'ADMIN')" class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-500/40 hover:bg-indigo-900/80 text-left text-indigo-200 transition">
-                <strong class="block text-white">🛡️ Admin Console</strong>
-                <span class="text-[11px] text-indigo-300">Dr. Alan Turing (Master Controls & ChronoBot)</span>
+              <button onclick="quickLogin('admin@university.edu', 'admin123', 'ADMIN')" class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-indigo-500/40 text-left transition group">
+                <div class="flex items-center justify-between">
+                  <strong class="text-[var(--text-main)] group-hover:text-indigo-400 transition">🛡️ Dean Alan Turing</strong>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300">ADMIN</span>
+                </div>
+                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">Master Controls & ChronoBot</span>
               </button>
-              <button onclick="quickLogin('grace.hopper@univ.edu', 'faculty123', 'FACULTY')" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-750 text-left text-slate-300 transition">
-                <strong class="block text-white">👨‍🏫 CSE Faculty</strong>
-                <span class="text-[11px] text-slate-400">Dr. Grace Hopper (CS101 Intro Computing)</span>
+              <button onclick="quickLogin('grace.hopper@univ.edu', 'faculty123', 'FACULTY')" class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-emerald-500/40 text-left transition group">
+                <div class="flex items-center justify-between">
+                  <strong class="text-[var(--text-main)] group-hover:text-emerald-400 transition">👩‍🏫 Dr. Grace Hopper</strong>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">CSE</span>
+                </div>
+                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">CS101 Intro to Computing</span>
               </button>
-              <button onclick="quickLogin('claude.shannon@univ.edu', 'faculty123', 'FACULTY')" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-750 text-left text-slate-300 transition">
-                <strong class="block text-white">📡 ECE Faculty</strong>
-                <span class="text-[11px] text-slate-400">Dr. Claude Shannon (EC101 Signals)</span>
+              <button onclick="quickLogin('claude.shannon@univ.edu', 'faculty123', 'FACULTY')" class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-cyan-500/40 text-left transition group">
+                <div class="flex items-center justify-between">
+                  <strong class="text-[var(--text-main)] group-hover:text-cyan-400 transition">📡 Dr. Claude Shannon</strong>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">ECE</span>
+                </div>
+                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">EC101 Basic Electronics</span>
               </button>
-              <button onclick="quickLogin('nikola.tesla@univ.edu', 'faculty123', 'FACULTY')" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-750 text-left text-slate-300 transition">
-                <strong class="block text-white">⚡ EEE Faculty</strong>
-                <span class="text-[11px] text-slate-400">Dr. Nikola Tesla (EE101 Circuit Analysis)</span>
+              <button onclick="quickLogin('nikola.tesla@univ.edu', 'faculty123', 'FACULTY')" class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-amber-500/40 text-left transition group">
+                <div class="flex items-center justify-between">
+                  <strong class="text-[var(--text-main)] group-hover:text-amber-400 transition">⚡ Dr. Nikola Tesla</strong>
+                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">EEE</span>
+                </div>
+                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">EE101 Circuit Theory</span>
               </button>
             </div>
           </div>
 
-          <!-- Bottom Prompt Requested by User: "If no account?" -->
-          <div class="pt-5 border-t border-[var(--border,#334155)] text-center text-sm">
-            <span class="text-slate-400">If no account?</span>
+          <!-- Bottom Switch Prompt -->
+          <div class="pt-4 border-t border-[var(--border-subtle)] text-center text-sm">
+            <span class="text-[var(--text-muted)]">If no account?</span>
             <button type="button" onclick="switchToRegisterView()" class="text-indigo-400 hover:text-indigo-300 font-bold underline ml-1.5 transition">
               Create an Account / Register Here
             </button>
           </div>
+
         </div>
 
-        <!-- ================================================================ -->
-        <!-- VIEW 2: NEW ACCOUNT REGISTRATION INTERFACE -->
-        <!-- ================================================================ -->
+        <!-- ------------------------------------------------------------------ -->
+        <!-- VIEW 1.B: REGISTRATION INTERFACE                                   -->
+        <!-- ------------------------------------------------------------------ -->
         <div id="auth-view-register" class="hidden space-y-5">
-          <div class="flex items-center justify-between pb-3 border-b border-[var(--border,#334155)]">
+          
+          <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
             <div class="flex items-center gap-2">
-              <span class="text-xl">📝</span>
-              <h3 class="text-base font-bold text-white">Create New Institutional Account</h3>
+              <span class="text-lg">📝</span>
+              <h3 class="text-sm font-bold text-[var(--text-main)] uppercase tracking-wider">Create Academic Profile</h3>
             </div>
-            <button onclick="switchToLoginView()" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold underline">Back to Sign In</button>
+            <button onclick="switchToLoginView()" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold underline">
+              Back to Sign In
+            </button>
           </div>
 
-          <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">
-            Register as a faculty member or administrator. Once created, your credentials will be stored in the database for instant sign-in.
+          <p class="text-xs text-[var(--text-muted)]">
+            Register as a faculty member or administrator. Credentials persist directly into the institutional registry database.
           </p>
 
-          <!-- Registration Form -->
           <form id="register-form" onsubmit="handleRegistrationSubmit(event)" class="space-y-4">
-            <!-- Role Selection -->
             <div>
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Select Role</label>
-              <select id="reg-role" onchange="onRegisterRoleChanged()" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Select Role</label>
+              <select id="reg-role" onchange="onRegisterRoleChanged()" class="glass-input w-full rounded-xl p-3 text-xs outline-none">
                 <option value="FACULTY">Faculty Member (Teacher)</option>
                 <option value="ADMIN">Institutional Administrator (Dean/Admin)</option>
               </select>
             </div>
 
-            <!-- Full Name -->
             <div>
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Full Name & Title</label>
-              <input type="text" id="reg-name" required placeholder="e.g. Dr. Sarah Connor" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Full Name & Academic Title</label>
+              <input type="text" id="reg-name" required placeholder="e.g. Dr. Sarah Connor" class="glass-input w-full rounded-xl p-3 text-xs outline-none">
             </div>
 
-            <!-- Email -->
             <div>
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Institutional Email</label>
-              <input type="email" id="reg-email" required placeholder="sarah.connor@univ.edu" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Institutional Email</label>
+              <input type="email" id="reg-email" required placeholder="sarah.connor@univ.edu" class="glass-input w-full rounded-xl p-3 text-xs outline-none">
             </div>
 
-            <!-- Department (Visible for Faculty) -->
             <div id="reg-dept-group">
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Academic Department</label>
-              <select id="reg-dept" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Academic Department</label>
+              <select id="reg-dept" class="glass-input w-full rounded-xl p-3 text-xs outline-none">
                 <option value="1">Computer Science & Engineering (CSE)</option>
                 <option value="2">Electronics & Communication Engineering (ECE)</option>
                 <option value="3">Electrical & Electronics Engineering (EEE)</option>
@@ -331,164 +552,177 @@
               </select>
             </div>
 
-            <!-- Password -->
             <div>
-              <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1.5">Set Password</label>
-              <input type="password" id="reg-password" required placeholder="••••••••" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-xl p-3 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+              <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">Set Password</label>
+              <input type="password" id="reg-password" required placeholder="••••••••" class="glass-input w-full rounded-xl p-3 text-xs outline-none">
             </div>
 
-            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2">
-              <span>Register & Access Portal ✨</span>
+            <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-sm shadow-xl shadow-emerald-600/30 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
+              <span>Register & Sign In ✨</span>
             </button>
           </form>
 
-          <!-- Back to Login Link -->
-          <div class="pt-5 border-t border-[var(--border,#334155)] text-center text-sm">
-            <span class="text-slate-400">Already have an account?</span>
+          <div class="pt-4 border-t border-[var(--border-subtle)] text-center text-sm">
+            <span class="text-[var(--text-muted)]">Already have an account?</span>
             <button type="button" onclick="switchToLoginView()" class="text-indigo-400 hover:text-indigo-300 font-bold underline ml-1.5 transition">
               Sign In Here
             </button>
           </div>
+
         </div>
 
       </div>
     </main>
 
     <!-- ==================================================================== -->
-    <!-- 1. ADMIN INTERFACE -->
+    <!-- 2. ADMINISTRATOR MASTER CONTROL CENTER                                -->
     <!-- ==================================================================== -->
     <main id="admin-section" class="space-y-6">
 
-      <!-- ==================================================================== -->
-      <!-- CHRONOBOT: SITUATIONAL AI TIMETABLE ASSISTANT -->
-      <!-- ==================================================================== -->
-      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/60 to-purple-950/50 border border-indigo-500/40 rounded-2xl p-6 shadow-xl space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-indigo-500/20">
-          <div class="flex items-center gap-3">
-            <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-xl shadow">
-              🤖
-            </div>
-            <div>
-              <div class="flex items-center gap-2">
-                <h2 class="text-base font-bold text-white">ChronoBot: Situational AI Timetable Assistant</h2>
-                <span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-full font-bold">
-                  Live DB Intelligent Engine
-                </span>
+      <!-- ------------------------------------------------------------------ -->
+      <!-- 2.A CHRONOBOT: SITUATIONAL AI TIMETABLE COPILOT                     -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="relative group rounded-3xl p-[1px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-2xl overflow-hidden">
+        <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-4 bg-[var(--bg-card-solid)]/95">
+          
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-[var(--border-subtle)]">
+            <div class="flex items-center gap-3">
+              <div class="h-11 w-11 rounded-2xl bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-2xl shadow-lg shrink-0">
+                🤖
               </div>
-              <p class="text-xs text-slate-300">
-                Creates custom timetables according to dynamic situations using data stored in the database.
-              </p>
+              <div>
+                <div class="flex items-center gap-2.5 flex-wrap">
+                  <h2 class="text-base sm:text-lg font-extrabold text-[var(--text-main)]">
+                    ChronoBot Situational AI Copilot
+                  </h2>
+                  <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    Neural CP Engine
+                  </span>
+                </div>
+                <p class="text-xs text-[var(--text-muted)] mt-0.5">
+                  Generates conflict-free timetables on-the-fly based on institutional situations, queries, and constraints.
+                </p>
+              </div>
             </div>
-          </div>
-          <div class="flex items-center gap-2 text-xs">
-            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-slate-300 font-mono text-[11px]" id="bot-db-status">DB Connected: 24 Faculty • 24 Rooms</span>
-          </div>
-        </div>
-
-        <!-- Situational Scenario Quick Chips -->
-        <div class="space-y-1.5">
-          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">One-Click Situational Scenarios:</div>
-          <div class="flex flex-wrap gap-2 text-xs">
-            <button onclick="runBotScenario('emergency_day')" class="px-3 py-1.5 rounded-lg bg-rose-950/50 hover:bg-rose-900/70 border border-rose-500/40 text-rose-200 transition flex items-center gap-1.5">
-              <span>⚡ Emergency 1-Day Schedule (Tomorrow)</span>
-            </button>
-            <button onclick="runBotScenario('lab_intensive')" class="px-3 py-1.5 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/70 border border-emerald-500/40 text-emerald-200 transition flex items-center gap-1.5">
-              <span>🔬 Lab-Intensive Week for All 6 Sections</span>
-            </button>
-            <button onclick="runBotScenario('freshman_priority')" class="px-3 py-1.5 rounded-lg bg-amber-950/50 hover:bg-amber-900/70 border border-amber-500/40 text-amber-200 transition flex items-center gap-1.5">
-              <span>🎓 Freshman Focus (Year 1 Sections A & B)</span>
-            </button>
-            <button onclick="runBotScenario('balanced_week')" class="px-3 py-1.5 rounded-lg bg-indigo-950/50 hover:bg-indigo-900/70 border border-indigo-500/40 text-indigo-200 transition flex items-center gap-1.5">
-              <span>⚖️ Standard Balanced Week (0 Blank Slots)</span>
-            </button>
-            <button onclick="runBotScenario('annual_calendar')" class="px-3 py-1.5 rounded-lg bg-purple-950/50 hover:bg-purple-900/70 border border-purple-500/40 text-purple-200 transition flex items-center gap-1.5">
-              <span>📆 Full Academic Year Calendar</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Interactive Situational Prompt Input Bar -->
-        <form onsubmit="handleBotPromptSubmit(event)" class="flex flex-col sm:flex-row gap-2 pt-1">
-          <div class="relative flex-1">
-            <input type="text" id="bot-prompt-input" placeholder="Ask ChronoBot to generate timetables for any situation (e.g., 'Generate emergency tomorrow schedule with balanced labs and 0 blank slots')..." class="w-full bg-slate-900/90 border border-indigo-500/40 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400">
-          </div>
-          <button type="submit" id="bot-submit-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-xl text-xs shadow flex items-center justify-center gap-2 transition whitespace-nowrap">
-            <span>Ask ChronoBot 🚀</span>
-          </button>
-        </form>
-
-        <!-- Bot Response / Situational Reasoning Stream -->
-        <div id="bot-response-card" class="hidden rounded-xl border border-indigo-500/30 bg-slate-950/80 p-4 space-y-3">
-          <div class="flex items-start justify-between gap-3">
-            <div class="flex items-center gap-2">
-              <span class="text-lg">🤖</span>
-              <strong class="text-xs text-indigo-300 uppercase tracking-wider font-bold">ChronoBot Situational Output</strong>
-            </div>
-            <span id="bot-badge-scenario" class="text-[10px] px-2 py-0.5 rounded-full font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"></span>
-          </div>
-
-          <!-- Bot Markdown Message -->
-          <div id="bot-message-text" class="text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-line border-l-2 border-indigo-500 pl-3">
-            <!-- Injected via JS -->
-          </div>
-
-          <!-- Situational Insight Badges -->
-          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-slate-800 text-[11px]">
-            <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 text-center">
-              <span class="text-slate-400 block text-[10px]">Total Periods</span>
-              <strong class="text-white text-xs" id="bot-stat-periods">0</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 text-center">
-              <span class="text-slate-400 block text-[10px]">Conflict Overlaps</span>
-              <strong class="text-emerald-400 text-xs">0 (Guaranteed)</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 text-center">
-              <span class="text-slate-400 block text-[10px]">Lab Sessions</span>
-              <strong class="text-emerald-300 text-xs" id="bot-stat-labs">0</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 text-center">
-              <span class="text-slate-400 block text-[10px]">Leisure Slots</span>
-              <strong class="text-amber-300 text-xs" id="bot-stat-leisure">0</strong>
-            </div>
-            <div class="bg-slate-900 p-2 rounded-lg border border-slate-800 text-center">
-              <span class="text-slate-400 block text-[10px]">Daily Faculty Load</span>
-              <strong class="text-indigo-300 text-xs">3 Hours / Day</strong>
+            
+            <div class="flex items-center gap-2 text-xs self-start md:self-auto">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span class="text-[var(--text-muted)] font-mono text-[11px]" id="bot-db-status">
+                DB Connected: 24 Faculty • 24 Classrooms • 6 Sections
+              </span>
             </div>
           </div>
 
-          <!-- Bot Action Footer -->
-          <div class="flex items-center justify-between pt-1">
-            <span class="text-[11px] text-slate-400 italic">Schedule saved as DRAFT in database and loaded into Master Timetable Viewer below.</span>
-            <button onclick="scrollToGrid()" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 underline">
-              View Generated Grid ↓
-            </button>
+          <!-- Scenario Quick Chips -->
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">One-Click Situational Scenarios:</div>
+            <div class="flex flex-wrap gap-2 text-xs">
+              <button onclick="runBotScenario('emergency_day')" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 transition-all font-medium flex items-center gap-1.5">
+                <span>⚡ Emergency 1-Day Schedule (Tomorrow)</span>
+              </button>
+              <button onclick="runBotScenario('lab_intensive')" class="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 transition-all font-medium flex items-center gap-1.5">
+                <span>🔬 Lab-Intensive Week for All 6 Sections</span>
+              </button>
+              <button onclick="runBotScenario('freshman_priority')" class="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 transition-all font-medium flex items-center gap-1.5">
+                <span>🎓 Freshman Focus (Year 1 Sections A & B)</span>
+              </button>
+              <button onclick="runBotScenario('balanced_week')" class="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 transition-all font-medium flex items-center gap-1.5">
+                <span>⚖️ Standard Balanced Week (0 Blank Slots)</span>
+              </button>
+              <button onclick="runBotScenario('annual_calendar')" class="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-300 transition-all font-medium flex items-center gap-1.5">
+                <span>📆 Full Academic Year Master Calendar</span>
+              </button>
+            </div>
           </div>
+
+          <!-- Situational Prompt Input Bar -->
+          <form onsubmit="handleBotPromptSubmit(event)" class="flex flex-col sm:flex-row gap-2 pt-1">
+            <div class="relative flex-1">
+              <input type="text" id="bot-prompt-input" placeholder="Prompt ChronoBot (e.g., 'Generate emergency tomorrow schedule with balanced labs and 0 blank slots')..." class="glass-input w-full rounded-2xl px-4 py-3 text-xs sm:text-sm text-[var(--text-main)] placeholder:text-[var(--text-faint)] outline-none">
+            </div>
+            <button type="submit" id="bot-submit-btn" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold px-6 py-3 rounded-2xl text-xs sm:text-sm shadow-xl shadow-indigo-600/30 flex items-center justify-center gap-2 transition-all duration-200 shrink-0">
+              <span>Ask ChronoBot 🚀</span>
+            </button>
+          </form>
+
+          <!-- ChronoBot Response Card -->
+          <div id="bot-response-card" class="hidden rounded-2xl border border-indigo-500/30 bg-[var(--bg-surface)] p-5 space-y-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🤖</span>
+                <strong class="text-xs uppercase tracking-wider font-bold text-indigo-400">ChronoBot Situational Assessment</strong>
+              </div>
+              <span id="bot-badge-scenario" class="text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"></span>
+            </div>
+
+            <div id="bot-message-text" class="text-xs sm:text-sm text-[var(--text-main)] leading-relaxed font-sans whitespace-pre-line border-l-2 border-indigo-500 pl-3.5">
+              <!-- Dynamically populated via JS -->
+            </div>
+
+            <!-- Bot Stat Strip -->
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2 border-t border-[var(--border-subtle)] text-[11px]">
+              <div class="bg-[var(--bg-elevated)] p-2.5 rounded-xl border border-[var(--border-subtle)] text-center">
+                <span class="text-[var(--text-muted)] block text-[10px]">Total Periods</span>
+                <strong class="text-sm font-bold text-[var(--text-main)] font-mono" id="bot-stat-periods">0</strong>
+              </div>
+              <div class="bg-[var(--bg-elevated)] p-2.5 rounded-xl border border-[var(--border-subtle)] text-center">
+                <span class="text-[var(--text-muted)] block text-[10px]">Conflict Clashes</span>
+                <strong class="text-sm font-bold text-emerald-400 font-mono">0 (Verified)</strong>
+              </div>
+              <div class="bg-[var(--bg-elevated)] p-2.5 rounded-xl border border-[var(--border-subtle)] text-center">
+                <span class="text-[var(--text-muted)] block text-[10px]">Lab Sessions</span>
+                <strong class="text-sm font-bold text-emerald-300 font-mono" id="bot-stat-labs">0</strong>
+              </div>
+              <div class="bg-[var(--bg-elevated)] p-2.5 rounded-xl border border-[var(--border-subtle)] text-center">
+                <span class="text-[var(--text-muted)] block text-[10px]">Leisure Slots</span>
+                <strong class="text-sm font-bold text-amber-300 font-mono" id="bot-stat-leisure">0</strong>
+              </div>
+              <div class="bg-[var(--bg-elevated)] p-2.5 rounded-xl border border-[var(--border-subtle)] text-center">
+                <span class="text-[var(--text-muted)] block text-[10px]">Faculty Daily Cap</span>
+                <strong class="text-sm font-bold text-indigo-300 font-mono">3.0 Hrs/Day</strong>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-[var(--text-muted)] italic">Generated schedule synced into database and loaded into Master Grid below.</span>
+              <button onclick="scrollToGrid()" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 underline transition">
+                Scroll to Timetable Grid ↓
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      <!-- Admin Allocation Authority Card -->
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-6 pb-4 border-b border-[var(--border,#334155)]">
+      <!-- ------------------------------------------------------------------ -->
+      <!-- 2.B ADMIN ALLOCATION AUTHORITY (FACULTY, SUBJECT, SECTIONS A-F)    -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-6">
+        
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-4 border-b border-[var(--border-subtle)]">
           <div>
-            <h2 class="text-lg font-bold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
-              <span>🎯 Admin Authority: Faculty Class & Section Allocation</span>
-              <span class="text-xs bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium">Master Controller</span>
-            </h2>
-            <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">
-              Institution administrators have full authority to assign faculty to specific subjects, departments, and class sections (6 sections: A to F).
+            <div class="flex items-center gap-2">
+              <h2 class="text-base sm:text-lg font-extrabold text-[var(--text-main)]">
+                Admin Authority: Faculty Class & Section Allocation
+              </h2>
+              <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                Master Authority
+              </span>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">
+              Administrators have sovereign authority to assign faculty to subjects, departments, and class sections (6 sections: A to F).
             </p>
           </div>
-          <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-lg">
-            ⚠️ 1:1 Invariant: Each faculty member is restricted to exactly 1 subject.
+          <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl self-start lg:self-auto font-medium">
+            ⚠️ 1:1 Invariant: Each faculty member is strictly restricted to exactly 1 subject.
           </span>
         </div>
 
+        <!-- Allocation Form -->
         <form id="admin-allocation-form" onsubmit="handleAdminAllocationSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
-          <!-- 1. Department -->
           <div>
-            <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1">Department</label>
-            <select id="admin-alloc-dept" onchange="onAdminDeptChanged()" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Department</label>
+            <select id="admin-alloc-dept" onchange="onAdminDeptChanged()" class="glass-input w-full rounded-xl p-2.5 text-xs outline-none font-medium">
               <option value="1">CSE - Computer Science</option>
               <option value="2">ECE - Electronics</option>
               <option value="3">EEE - Electrical</option>
@@ -496,18 +730,16 @@
             </select>
           </div>
 
-          <!-- 2. Faculty Member -->
           <div class="lg:col-span-2">
-            <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1">Faculty Member</label>
-            <select id="admin-alloc-fac" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
-              <!-- Dynamically populated based on dept -->
+            <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Faculty Member</label>
+            <select id="admin-alloc-fac" class="glass-input w-full rounded-xl p-2.5 text-xs outline-none font-medium">
+              <!-- Dynamically populated via JS -->
             </select>
           </div>
 
-          <!-- 3. Academic Year & Semester -->
           <div>
-            <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1">Year & Semester</label>
-            <select id="admin-alloc-sem" onchange="onAdminSemChanged()" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Year & Semester</label>
+            <select id="admin-alloc-sem" onchange="onAdminSemChanged()" class="glass-input w-full rounded-xl p-2.5 text-xs outline-none font-medium">
               <option value="1">Year 1 - Sem 1</option>
               <option value="2">Year 1 - Sem 2</option>
               <option value="3">Year 2 - Sem 3</option>
@@ -519,10 +751,9 @@
             </select>
           </div>
 
-          <!-- 4. Section (6 Sections: A through F) -->
           <div>
-            <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1">Section (6 Secs)</label>
-            <select id="admin-alloc-section" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-amber-300">
+            <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Section (6 Secs)</label>
+            <select id="admin-alloc-section" class="glass-input w-full rounded-xl p-2.5 text-xs outline-none font-bold text-amber-400">
               <option value="1">Section A</option>
               <option value="2">Section B</option>
               <option value="3">Section C</option>
@@ -532,101 +763,107 @@
             </select>
           </div>
 
-          <!-- 5. Subject Offering -->
-          <div class="lg:col-span-1">
-            <label class="block text-xs font-semibold uppercase text-[var(--muted-foreground,#94a3b8)] mb-1">Subject</label>
-            <select id="admin-alloc-subject" class="w-full bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg p-2.5 text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
-              <!-- Dynamically populated based on dept & sem -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Subject Offering</label>
+            <select id="admin-alloc-subject" class="glass-input w-full rounded-xl p-2.5 text-xs outline-none font-medium">
+              <!-- Dynamically populated via JS -->
             </select>
           </div>
 
           <div class="md:col-span-3 lg:col-span-6 flex justify-end gap-3 pt-2">
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-2.5 rounded-lg text-xs shadow flex items-center gap-2 transition-all">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/25 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] flex items-center gap-2">
               <span>Assign Class & Section to Faculty</span>
             </button>
           </div>
         </form>
 
-        <!-- Current Allocations Table (Multi-Department & Sections) -->
-        <div class="mt-6 pt-5 border-t border-[var(--border,#334155)]">
-          <div class="flex items-center justify-between mb-3">
-            <div class="text-xs uppercase font-bold text-[var(--muted-foreground,#94a3b8)]">
-              Active Institutional Allocations Registry (<span id="total-allocations-count">0</span> Allocated Teachers)
+        <!-- Current Allocations Table -->
+        <div class="pt-4 border-t border-[var(--border-subtle)] space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="text-xs uppercase font-extrabold tracking-wider text-[var(--text-muted)]">
+              Institutional Allocation Registry (<span id="total-allocations-count" class="text-[var(--text-main)] font-mono font-bold">0</span> Teachers Assigned)
             </div>
           </div>
-          <div class="overflow-x-auto max-h-52 rounded-xl border border-[var(--border,#334155)] bg-[var(--background,#0f172a)]">
+          <div class="overflow-x-auto max-h-56 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-800 text-[var(--muted-foreground,#94a3b8)] border-b border-[var(--border,#334155)] sticky top-0">
+              <thead class="bg-[var(--bg-elevated)] text-[var(--text-muted)] border-b border-[var(--border-subtle)] sticky top-0 font-bold uppercase text-[10px] tracking-wider">
                 <tr>
-                  <th class="p-2.5">Faculty Member</th>
-                  <th class="p-2.5">Dept</th>
-                  <th class="p-2.5">Subject</th>
-                  <th class="p-2.5">Year / Term</th>
-                  <th class="p-2.5">Assigned Section</th>
-                  <th class="p-2.5">Authority</th>
+                  <th class="p-3">Faculty Member</th>
+                  <th class="p-3">Department</th>
+                  <th class="p-3">Subject Offering</th>
+                  <th class="p-3">Year / Term</th>
+                  <th class="p-3">Assigned Section</th>
+                  <th class="p-3">Authority Status</th>
                 </tr>
               </thead>
-              <tbody id="allocations-table-body" class="divide-y divide-[var(--border,#334155)]">
-                <!-- Injected via JS -->
+              <tbody id="allocations-table-body" class="divide-y divide-[var(--border-subtle)]">
+                <!-- Dynamically rendered via JS -->
               </tbody>
             </table>
           </div>
         </div>
+
       </div>
 
-      <!-- Admin Generation & Global Filtering Card -->
-      <div id="master-grid-section" class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md space-y-6">
+      <!-- ------------------------------------------------------------------ -->
+      <!-- 2.C GENERATION ENGINE & MASTER GLOBAL TIMETABLE VIEWER             -->
+      <!-- ------------------------------------------------------------------ -->
+      <div id="master-grid-section" class="glass-panel rounded-3xl p-6 sm:p-7 space-y-6">
         
-        <!-- Engine Controls Header -->
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-[var(--border,#334155)]">
+        <!-- Controls Bar -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-[var(--border-subtle)]">
           <div>
-            <h3 class="text-base font-bold text-[var(--foreground,#f8fafc)] flex items-center gap-2">
-              <span>⚡ Timetable Generation Engine</span>
-              <span id="admin-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-medium"></span>
-            </h3>
-            <p class="text-xs text-[var(--muted-foreground,#94a3b8)]">
-              Executes Constraint Programming (CP-SAT) across 6 sections and CSE, ECE, EEE, MECH.
+            <div class="flex items-center gap-2.5">
+              <h3 class="text-base sm:text-lg font-extrabold text-[var(--text-main)]">
+                Global Timetable Generation Engine
+              </h3>
+              <span id="admin-status-pill" class="text-xs px-2.5 py-0.5 rounded-full font-bold"></span>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">
+              Strict 09:20 - 16:10 timing enforcement • 0 blank periods • daily labs guaranteed • 2 days Period 6 leisure.
             </p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3">
-            <select id="admin-gen-scope" onchange="onAdminScopeChanged()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-3 py-2 text-xs outline-none">
+            <select id="admin-gen-scope" onchange="onAdminScopeChanged()" class="glass-input rounded-xl px-3 py-2 text-xs font-semibold outline-none cursor-pointer">
               <option value="WEEK">📅 1 Week (Master Template)</option>
-              <option value="DAY">🗓️ 1 Day (Single Date)</option>
+              <option value="DAY">🗓️ 1 Day (Specific Date)</option>
               <option value="YEAR">📆 1 Academic Year (Full Calendar)</option>
             </select>
 
             <div id="admin-target-date-box" class="hidden">
-              <input type="date" id="admin-gen-date" value="2026-10-19" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-3 py-2 text-xs outline-none">
+              <input type="date" id="admin-gen-date" value="2026-10-19" class="glass-input rounded-xl px-3 py-2 text-xs font-semibold outline-none">
             </div>
 
-            <button onclick="triggerGeneration()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition-all">
+            <button onclick="triggerGeneration()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]">
               <span>⚡ Generate Timetable</span>
             </button>
 
-            <button id="admin-publish-btn" onclick="publishSchedule()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-4 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition-all disabled:opacity-50">
+            <button id="admin-publish-btn" onclick="publishSchedule()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs shadow-lg shadow-emerald-600/30 flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50">
               <span>🚀 Publish to Faculty</span>
             </button>
           </div>
         </div>
 
-        <!-- Master Global Filtering Controls -->
-        <div>
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
-            <span class="text-xs font-bold text-[var(--muted-foreground,#94a3b8)] uppercase">Filter Master Timetable:</span>
+        <!-- Filter Bar -->
+        <div class="space-y-3">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-[var(--text-muted)]">
+              Filter Master Schedule:
+            </span>
             
             <div class="flex flex-wrap items-center gap-2">
               <!-- Department Filter -->
-              <select id="filter-dept" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-2.5 py-1.5 text-xs outline-none">
-                <option value="">All Departments</option>
-                <option value="1">CSE</option>
-                <option value="2">ECE</option>
-                <option value="3">EEE</option>
-                <option value="4">MECH</option>
+              <select id="filter-dept" onchange="applyAdminFilters()" class="glass-input rounded-xl px-2.5 py-1.5 text-xs outline-none font-semibold">
+                <option value="">All Departments (CSE, ECE, EEE, MECH)</option>
+                <option value="1">CSE - Computer Science</option>
+                <option value="2">ECE - Electronics</option>
+                <option value="3">EEE - Electrical</option>
+                <option value="4">MECH - Mechanical</option>
               </select>
 
-              <!-- Section Filter (6 Sections: A to F) -->
-              <select id="filter-section" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-2.5 py-1.5 text-xs outline-none text-amber-300 font-semibold">
+              <!-- Section Filter (6 Sections A-F) -->
+              <select id="filter-section" onchange="applyAdminFilters()" class="glass-input rounded-xl px-2.5 py-1.5 text-xs outline-none text-amber-400 font-bold">
                 <option value="">All Sections (A-F)</option>
                 <option value="1">Section A</option>
                 <option value="2">Section B</option>
@@ -637,7 +874,7 @@
               </select>
 
               <!-- Year Filter -->
-              <select id="filter-year" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-2.5 py-1.5 text-xs outline-none">
+              <select id="filter-year" onchange="applyAdminFilters()" class="glass-input rounded-xl px-2.5 py-1.5 text-xs outline-none font-semibold">
                 <option value="">All Years</option>
                 <option value="1">Year 1</option>
                 <option value="2">Year 2</option>
@@ -646,7 +883,7 @@
               </select>
 
               <!-- Semester Filter -->
-              <select id="filter-sem" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-2.5 py-1.5 text-xs outline-none">
+              <select id="filter-sem" onchange="applyAdminFilters()" class="glass-input rounded-xl px-2.5 py-1.5 text-xs outline-none font-semibold">
                 <option value="">All Semesters</option>
                 <option value="1">Semester 1</option>
                 <option value="2">Semester 2</option>
@@ -659,36 +896,41 @@
               </select>
 
               <!-- Faculty Filter -->
-              <select id="filter-faculty" onchange="applyAdminFilters()" class="bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] text-white rounded-lg px-2.5 py-1.5 text-xs outline-none max-w-[180px]">
+              <select id="filter-faculty" onchange="applyAdminFilters()" class="glass-input rounded-xl px-2.5 py-1.5 text-xs outline-none max-w-[180px] font-semibold">
                 <option value="">All Faculty</option>
               </select>
 
               <!-- CSV Export -->
-              <button onclick="exportToCSV()" class="bg-slate-700 hover:bg-slate-600 text-white font-medium px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 transition-all">
+              <button onclick="exportToCSV()" class="bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-subtle)] text-[var(--text-main)] font-semibold px-3 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all">
                 <span>📥 Export CSV</span>
               </button>
             </div>
           </div>
 
-          <!-- Master Timetable Grid -->
-          <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] mb-1 sm:hidden">
+          <!-- Mobile Horizontal Scroll Hint -->
+          <div class="flex items-center justify-between text-[11px] text-[var(--text-muted)] sm:hidden">
             <span>↔️ Swipe horizontally to view full schedule</span>
-            <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded">6 Days/Periods</span>
+            <span class="text-[10px] bg-[var(--bg-elevated)] px-2 py-0.5 rounded-lg font-mono">6 Days/Periods</span>
           </div>
-          <div class="overflow-x-auto rounded-xl border border-[var(--border,#334155)] bg-[var(--background,#0f172a)] scroll-smooth">
-            <div id="admin-timetable-grid" class="min-w-[950px] p-3">
+
+          <!-- Master Timetable Grid -->
+          <div class="overflow-x-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] scroll-smooth shadow-inner">
+            <div id="admin-timetable-grid" class="min-w-[960px] p-3.5">
               <!-- Rendered via JS -->
             </div>
           </div>
 
-          <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)] gap-2">
-            <span id="admin-stats-summary">Displaying scheduled classes.</span>
-            <div class="flex items-center gap-3">
-              <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span> Lab Session (2h/3h)</span>
-              <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-400"></span> Leisure (Last Hr)</span>
-              <span class="text-emerald-400 font-semibold">✓ 100% Conflict-Free</span>
+          <!-- Legend Strip -->
+          <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--text-muted)] gap-3">
+            <span id="admin-stats-summary" class="font-medium">Displaying scheduled classes.</span>
+            <div class="flex items-center gap-3.5 flex-wrap">
+              <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-indigo-400"></span> Theory Class (1h)</span>
+              <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-400"></span> Lab Session (2h/3h)</span>
+              <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-400"></span> Period 6 Leisure</span>
+              <span class="text-emerald-400 font-bold">✓ 100% Conflict-Free</span>
             </div>
           </div>
+
         </div>
 
       </div>
@@ -696,57 +938,61 @@
     </main>
 
     <!-- ==================================================================== -->
-    <!-- 2. FACULTY PERSONALIZED DASHBOARD -->
+    <!-- 3. FACULTY PERSONALIZED DASHBOARD                                    -->
     <!-- ==================================================================== -->
     <main id="faculty-section" class="hidden space-y-6">
 
-      <!-- Faculty Header Banner -->
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <!-- Faculty Header Card -->
+      <div class="glass-panel rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span>👨‍🏫 Welcome, <span id="faculty-dash-name">Dr. Grace Hopper</span></span>
-            <span id="faculty-dash-dept-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">CSE</span>
-          </h2>
-          <p class="text-xs text-[var(--muted-foreground,#94a3b8)] mt-1">
-            Assigned Subject: <strong id="faculty-dash-subject" class="text-white">CS101 - Intro to Computing</strong> | Section: <span id="faculty-dash-section" class="text-amber-300 font-bold">Section A</span>
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <h2 class="text-lg sm:text-xl font-extrabold text-[var(--text-main)]">
+              Welcome, <span id="faculty-dash-name">Dr. Grace Hopper</span>
+            </h2>
+            <span id="faculty-dash-dept-badge" class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              CSE
+            </span>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-1">
+            Allocated Subject: <strong id="faculty-dash-subject" class="text-[var(--text-main)]">CS101 - Intro to Computing</strong> | Section: <span id="faculty-dash-section" class="text-amber-400 font-bold">Section A</span>
           </p>
         </div>
 
-        <div class="flex items-center gap-3">
-          <!-- View Scope Switcher -->
-          <div class="flex items-center bg-[var(--background,#0f172a)] border border-[var(--border,#334155)] p-1 rounded-xl text-xs">
-            <button onclick="setFacultyViewScope('DAY')" id="btn-scope-day" class="px-3 py-1.5 rounded-lg transition-all font-medium text-[var(--muted-foreground,#94a3b8)]">1 Day</button>
-            <button onclick="setFacultyViewScope('WEEK')" id="btn-scope-week" class="px-3 py-1.5 rounded-lg transition-all font-semibold bg-indigo-600 text-white shadow">Full Week</button>
-            <button onclick="setFacultyViewScope('YEAR')" id="btn-scope-year" class="px-3 py-1.5 rounded-lg transition-all font-medium text-[var(--muted-foreground,#94a3b8)]">Full Year</button>
+        <div class="flex items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
+          <div class="flex items-center p-1 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-xs font-semibold">
+            <button onclick="setFacultyViewScope('DAY')" id="btn-scope-day" class="px-3 py-1.5 rounded-lg text-[var(--text-muted)] transition-all">1 Day</button>
+            <button onclick="setFacultyViewScope('WEEK')" id="btn-scope-week" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow transition-all">Full Week</button>
+            <button onclick="setFacultyViewScope('YEAR')" id="btn-scope-year" class="px-3 py-1.5 rounded-lg text-[var(--text-muted)] transition-all">Full Year</button>
           </div>
-          <span id="fac-schedule-badge" class="text-xs px-2.5 py-1 rounded-full font-medium"></span>
+          <span id="fac-schedule-badge" class="text-xs px-2.5 py-1 rounded-full font-bold"></span>
         </div>
       </div>
 
-      <!-- ==================================================================== -->
-      <!-- 2.A FACULTY CHOICE: START OF NEW SEMESTER (SUBJECT & YEAR SELECTION) -->
-      <!-- ==================================================================== -->
-      <div class="bg-gradient-to-r from-slate-900 to-indigo-950/40 border border-indigo-500/30 rounded-2xl p-6 shadow-md space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-3 border-b border-indigo-500/20">
+      <!-- Semester Teaching Preference Selection Form -->
+      <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
           <div>
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>🎓 Start of New Semester: Teaching Preference Selection</span>
-              <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/30">Active Registration</span>
-            </h3>
-            <p class="text-xs text-slate-300">
-              A year has 2 semesters. Select your preferred Year, Semester, and Subject offering.
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-extrabold text-[var(--text-main)]">
+                Start of New Semester: Teaching Preference Selection
+              </h3>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                1:1 Invariant
+              </span>
+            </div>
+            <p class="text-xs text-[var(--text-muted)] mt-0.5">
+              Each academic year consists of 2 semesters. Select your preferred Year, Semester, and Subject offering.
             </p>
           </div>
-          <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+          <span class="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-medium self-start md:self-auto">
             Crucial Rule: Restricted to choosing only 1 subject
           </span>
         </div>
 
         <form id="faculty-choice-form" onsubmit="handleFacultyPreferenceSubmit(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3.5 text-xs">
-          <!-- 1. Academic Year -->
           <div>
-            <label class="block font-semibold uppercase text-slate-300 mb-1">Academic Year</label>
-            <select id="fac-choice-year" onchange="onFacultyYearChanged()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label class="block font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Academic Year</label>
+            <select id="fac-choice-year" onchange="onFacultyYearChanged()" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold">
               <option value="1">Year 1 (Freshman)</option>
               <option value="2">Year 2 (Sophomore)</option>
               <option value="3">Year 3 (Junior)</option>
@@ -754,26 +1000,23 @@
             </select>
           </div>
 
-          <!-- 2. Semester (2 semesters per year) -->
           <div>
-            <label class="block font-semibold uppercase text-slate-300 mb-1">Semester (2 Sems/Yr)</label>
-            <select id="fac-choice-sem" onchange="onFacultySemChanged()" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
-              <!-- Dynamically populated based on chosen year -->
+            <label class="block font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Semester (2 Sems/Yr)</label>
+            <select id="fac-choice-sem" onchange="onFacultySemChanged()" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold">
+              <!-- Populated via JS -->
             </select>
           </div>
 
-          <!-- 3. Subject Offering -->
           <div>
-            <label class="block font-semibold uppercase text-slate-300 mb-1">Subject Offering (Theory / Lab)</label>
-            <select id="fac-choice-subject" class="w-full bg-slate-900 border border-slate-700 text-white rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
-              <!-- Dynamically populated based on dept & sem -->
+            <label class="block font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Subject Offering</label>
+            <select id="fac-choice-subject" class="glass-input w-full rounded-xl p-2.5 outline-none font-semibold">
+              <!-- Populated via JS -->
             </select>
           </div>
 
-          <!-- 4. Class Section -->
           <div>
-            <label class="block font-semibold uppercase text-slate-300 mb-1">Preferred Section (A-F)</label>
-            <select id="fac-choice-section" class="w-full bg-slate-900 border border-slate-700 text-amber-300 font-bold rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+            <label class="block font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">Preferred Section (A-F)</label>
+            <select id="fac-choice-section" class="glass-input w-full rounded-xl p-2.5 outline-none font-bold text-amber-400">
               <option value="1">Section A</option>
               <option value="2">Section B</option>
               <option value="3">Section C</option>
@@ -783,53 +1026,63 @@
             </select>
           </div>
 
-          <div class="md:col-span-4 flex items-center justify-between pt-2">
-            <div class="text-[11px] text-slate-400">
-              * Choosing a new subject automatically updates your 1:1 institutional allocation.
-            </div>
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2 rounded-lg text-xs shadow flex items-center gap-1.5 transition-all">
+          <div class="md:col-span-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
+            <span class="text-[11px] text-[var(--text-muted)]">
+              * Registering a new subject replaces your current 1:1 institutional allocation immediately.
+            </span>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-1.5">
               <span>💾 Save Semester Choice</span>
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Day selector if Day scope is active -->
-      <div id="fac-day-filter-container" class="hidden p-3 bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-xl flex items-center justify-between">
-        <span class="text-xs font-semibold text-[var(--muted-foreground,#94a3b8)]">Select Day:</span>
-        <div class="flex gap-2">
-          <button onclick="selectFacultyDay(0)" class="fac-day-pill px-3 py-1 rounded-lg text-xs bg-indigo-600 text-white font-semibold">Mon</button>
-          <button onclick="selectFacultyDay(1)" class="fac-day-pill px-3 py-1 rounded-lg text-xs text-[var(--muted-foreground,#94a3b8)]">Tue</button>
-          <button onclick="selectFacultyDay(2)" class="fac-day-pill px-3 py-1 rounded-lg text-xs text-[var(--muted-foreground,#94a3b8)]">Wed</button>
-          <button onclick="selectFacultyDay(3)" class="fac-day-pill px-3 py-1 rounded-lg text-xs text-[var(--muted-foreground,#94a3b8)]">Thu</button>
-          <button onclick="selectFacultyDay(4)" class="fac-day-pill px-3 py-1 rounded-lg text-xs text-[var(--muted-foreground,#94a3b8)]">Fri</button>
+      <!-- Day Selector (If Day scope is active) -->
+      <div id="fac-day-filter-container" class="hidden p-3 rounded-2xl glass-panel flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Select Day:</span>
+        <div class="flex gap-1.5">
+          <button onclick="selectFacultyDay(0)" class="fac-day-pill px-3 py-1.5 rounded-xl text-xs bg-indigo-600 text-white font-bold shadow">Mon</button>
+          <button onclick="selectFacultyDay(1)" class="fac-day-pill px-3 py-1.5 rounded-xl text-xs text-[var(--text-muted)] font-semibold">Tue</button>
+          <button onclick="selectFacultyDay(2)" class="fac-day-pill px-3 py-1.5 rounded-xl text-xs text-[var(--text-muted)] font-semibold">Wed</button>
+          <button onclick="selectFacultyDay(3)" class="fac-day-pill px-3 py-1.5 rounded-xl text-xs text-[var(--text-muted)] font-semibold">Thu</button>
+          <button onclick="selectFacultyDay(4)" class="fac-day-pill px-3 py-1.5 rounded-xl text-xs text-[var(--text-muted)] font-semibold">Fri</button>
         </div>
       </div>
 
       <!-- Personalized Timetable Grid -->
-      <div class="bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-6 shadow-md">
-        <div class="flex items-center justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] mb-1 sm:hidden">
+      <div class="glass-panel rounded-3xl p-6 sm:p-7 space-y-4">
+        
+        <div class="flex items-center justify-between text-[11px] text-[var(--text-muted)] sm:hidden">
           <span>↔️ Swipe horizontally to view periods</span>
-          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded">Timeline</span>
+          <span class="text-[10px] bg-[var(--bg-elevated)] px-2 py-0.5 rounded-lg font-mono">Timeline</span>
         </div>
-        <div class="overflow-x-auto rounded-xl border border-[var(--border,#334155)] bg-[var(--background,#0f172a)] scroll-smooth">
-          <div id="fac-timetable-grid" class="min-w-[700px] p-3">
+
+        <div class="overflow-x-auto rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-surface)] scroll-smooth shadow-inner">
+          <div id="fac-timetable-grid" class="min-w-[720px] p-3.5">
             <!-- Rendered by JS -->
           </div>
         </div>
-        <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--muted-foreground,#94a3b8)] gap-2">
-          <span class="text-emerald-400 font-medium">✓ Daily Teaching Workload: Exactly 3 Hours (Conflict-Free)</span>
-          <span id="fac-total-hours">Total: 0 lecture sessions / week</span>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between text-xs text-[var(--text-muted)] gap-2 pt-2">
+          <span class="text-emerald-400 font-bold flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-400"></span> Daily Teaching Workload: Exactly 3 Hours (0 Overlaps)
+          </span>
+          <span id="fac-total-hours" class="font-medium font-mono text-[var(--text-main)]">Total: 0 lecture sessions / week</span>
         </div>
+
       </div>
 
     </main>
 
   </div>
 
-  <!-- Client-Side State, Solvers & Auth Simulation -->
+  <!-- ==================================================================== -->
+  <!-- CLIENT-SIDE ARCHITECTURE, CONSTRAINT ENGINE & REST API INTEGRATION    -->
+  <!-- ==================================================================== -->
   <script>
-    // System Lookups
+    // ------------------------------------------------------------------------
+    // LOOKUPS & DATA RELATIONS
+    // ------------------------------------------------------------------------
     const departments = [
       { id: 1, code: "CSE", name: "Computer Science & Engineering" },
       { id: 2, code: "ECE", name: "Electronics & Communication Engineering" },
@@ -853,7 +1106,7 @@
       { id: 4, name: "Year 4 (Senior)" },
     ];
 
-    // Exactly 2 semesters per academic year (8 Semesters total)
+    // Exactly 2 semesters per academic year
     const semesters = [
       { id: 1, year_id: 1, name: "Semester 1" },
       { id: 2, year_id: 1, name: "Semester 2" },
@@ -972,7 +1225,7 @@
       { index: 6, start: "15:10", end: "16:10", isBreak: false, name: "Period 6" },
     ];
 
-    // Current Active Allocations (Strict 1:1 per faculty)
+    // Active Allocations (Strict 1:1 per faculty)
     let allocations = {
       "fac-cse-01": { subject_id: "sub-cs-101", dept_id: 1, year_id: 1, sem_id: 1, sec_id: 1, authority: "ADMIN" },
       "fac-cse-02": { subject_id: "sub-cs-201", dept_id: 1, year_id: 2, sem_id: 3, sec_id: 2, authority: "ADMIN" },
@@ -985,7 +1238,7 @@
       "fac-mech-02": { subject_id: "sub-me-101", dept_id: 4, year_id: 1, sem_id: 1, sec_id: 6, authority: "ADMIN" },
     };
 
-    let currentUser = null; // Start as null so the dedicated Login Page is displayed on arrival
+    let currentUser = null; // Start as null to display login interface on arrival
     let currentMainView = "AUTH";
     let currentGeneration = {
       id: "gen-active",
@@ -999,7 +1252,39 @@
     let facultySelectedDay = 0;
     let currentLoginRole = "FACULTY";
 
-    // Core Comprehensive Engine (Simulated in JS matching backend/app/solver.py)
+    // ------------------------------------------------------------------------
+    // SECURITY & XSS SANITIZATION (DEF-007)
+    // ------------------------------------------------------------------------
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // ------------------------------------------------------------------------
+    // THEME CONTROLLER & LOCALSTORAGE PERSISTENCE
+    // ------------------------------------------------------------------------
+    function applyTheme(themeName) {
+      document.documentElement.setAttribute("data-theme", themeName);
+      try {
+        localStorage.setItem("chrono_theme", themeName);
+      } catch (e) {}
+      const sel = document.getElementById("theme-selector");
+      if (sel) sel.value = themeName;
+    }
+
+    let authToken = null;
+    try {
+      authToken = localStorage.getItem("chrono_token");
+    } catch (e) {}
+
+    // ------------------------------------------------------------------------
+    // CONSTRAINT ENGINE & SOLVER SIMULATION (DEF-001)
+    // ------------------------------------------------------------------------
     function runConstraintSolver(scope, targetDate = "2026-10-19") {
       const cohortList = Object.keys(allocations).map(fId => {
         const a = allocations[fId];
@@ -1052,6 +1337,7 @@
           labInstructors.push(chosen);
         });
 
+        // DEF-001: Robust padding picking distinct unassigned teachers
         const candidateFac = facultyUsers.filter(f => f.role === "FACULTY");
         while (theoryTeachers.length < 3) {
           const picked = candidateFac.find(f => !theoryTeachers.some(t => t.id === f.id) && !labInstructors.some(l => l.id === f.id))
@@ -1186,9 +1472,7 @@
             });
 
           } else {
-            // STANDARD DAY:
-            // Morning: 3 classes taught by theory teachers (T0, T1, T2)
-            // Afternoon: 3-hr lab taught by lab instructors (L0, L1, L2)
+            // Standard day: Morning classes (Periods 1-3), Afternoon 3-hr lab (Periods 4-6)
             const mMeta = [
               { index: 1, start: "09:20", end: "10:20" },
               { index: 2, start: "10:20", end: "11:20" },
@@ -1274,35 +1558,11 @@
       return weeklyEntries;
     }
 
-    // DEF-007: HTML Sanitization Guard to prevent XSS injection
-    function escapeHtml(str) {
-      if (str === null || str === undefined) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    // Theme Switcher Controller with LocalStorage Persistence
-    function applyTheme(themeName) {
-      document.documentElement.setAttribute("data-theme", themeName);
-      try {
-        localStorage.setItem("chrono_theme", themeName);
-      } catch (e) {}
-      const sel = document.getElementById("theme-selector");
-      if (sel) sel.value = themeName;
-    }
-
-    let authToken = null;
-    try {
-      authToken = localStorage.getItem("chrono_token");
-    } catch (e) {}
-
-    // Startup Initialization
+    // ------------------------------------------------------------------------
+    // STARTUP INITIALIZATION
+    // ------------------------------------------------------------------------
     function init() {
-      // 0. Initialize Theme
+      // 0. Load persisted theme
       try {
         const savedTheme = localStorage.getItem("chrono_theme") || "dark-nebula";
         applyTheme(savedTheme);
@@ -1312,9 +1572,11 @@
 
       // 1. Populate Master Filters
       const filterFac = document.getElementById("filter-faculty");
-      facultyUsers.forEach(f => {
-        filterFac.innerHTML += `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)} (${escapeHtml(f.deptCode)})</option>`;
-      });
+      if (filterFac) {
+        facultyUsers.forEach(f => {
+          filterFac.innerHTML += `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)} (${escapeHtml(f.deptCode)})</option>`;
+        });
+      }
 
       // 2. Setup Admin Allocation Dropdowns
       onAdminDeptChanged();
@@ -1323,18 +1585,18 @@
       // 3. Setup Faculty Portal Choice Dropdowns
       onFacultyYearChanged();
 
-      // 4. Run solver
+      // 4. Initial Constraint Solver Run
       currentGeneration.entries = runConstraintSolver("WEEK");
 
-      // 5. Update Auth state display & view
+      // 5. Update Auth UI & Initial Render
       updateAuthUI();
       renderAllocationsTable();
       renderAdminSchedule();
     }
 
-    // =========================================================================
-    // AUTHENTICATION & MULTI-VIEW NAVIGATION CONTROLLER
-    // =========================================================================
+    // ------------------------------------------------------------------------
+    // NAVIGATION CONTROLLER
+    // ------------------------------------------------------------------------
     function switchMainView(view) {
       currentMainView = view;
       const authSection = document.getElementById("auth-section");
@@ -1345,37 +1607,31 @@
       const navAdmin = document.getElementById("nav-btn-admin");
       const navFaculty = document.getElementById("nav-btn-faculty");
 
-      // Hide all main view sections
       if (authSection) authSection.classList.add("hidden");
       if (adminSection) adminSection.classList.add("hidden");
       if (facultySection) facultySection.classList.add("hidden");
 
-      // Reset nav button styling
       [navAuth, navAdmin, navFaculty].forEach(btn => {
-        if (btn) btn.className = "px-3 py-1.5 rounded-lg font-bold text-slate-400 hover:text-white transition-all flex items-center gap-1.5";
+        if (btn) btn.className = "px-3.5 py-2 rounded-lg font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 flex items-center gap-1.5";
       });
 
       if (view === "AUTH") {
         if (authSection) authSection.classList.remove("hidden");
-        if (navAuth) navAuth.className = "px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-1.5";
+        if (navAuth) navAuth.className = "px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else if (view === "ADMIN") {
         if (adminSection) adminSection.classList.remove("hidden");
-        if (navAdmin) navAdmin.className = "px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all flex items-center gap-1.5";
+        if (navAdmin) navAdmin.className = "px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
         renderAllocationsTable();
         renderAdminSchedule();
       } else if (view === "FACULTY") {
         if (facultySection) facultySection.classList.remove("hidden");
-        if (navFaculty) navFaculty.className = "px-3 py-1.5 rounded-lg font-bold bg-emerald-600 text-white shadow transition-all flex items-center gap-1.5";
+        if (navFaculty) navFaculty.className = "px-3.5 py-2 rounded-lg font-bold bg-emerald-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
         if (currentUser && currentUser.role === "FACULTY") {
           onFacultyYearChanged();
           renderFacultySchedule();
         }
       }
-    }
-
-    function toggleAuthModal() {
-      switchMainView("AUTH");
     }
 
     function handleAuthActionBtn() {
@@ -1404,13 +1660,13 @@
       const emailInput = document.getElementById("login-email");
 
       if (role === "FACULTY") {
-        tabFac.className = "py-2.5 rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center justify-center gap-2";
-        tabAdm.className = "py-2.5 rounded-lg text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2";
+        tabFac.className = "py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all flex items-center justify-center gap-2";
+        tabAdm.className = "py-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex items-center justify-center gap-2";
         desc.innerText = "Sign in as a faculty member to select semester subjects and view your personal 3-hour daily timetable.";
         emailInput.placeholder = "grace.hopper@univ.edu";
       } else {
-        tabAdm.className = "py-2.5 rounded-lg bg-indigo-600 text-white shadow transition-all flex items-center justify-center gap-2";
-        tabFac.className = "py-2.5 rounded-lg text-slate-400 hover:text-white transition-all flex items-center justify-center gap-2";
+        tabAdm.className = "py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all flex items-center justify-center gap-2";
+        tabFac.className = "py-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex items-center justify-center gap-2";
         desc.innerText = "Sign in as an administrator to allocate classes, configure 6 sections, trigger generation, or consult ChronoBot.";
         emailInput.placeholder = "admin@university.edu";
       }
@@ -1440,6 +1696,9 @@
       executeLogin(email, pwd);
     }
 
+    // ------------------------------------------------------------------------
+    // ASYNC AUTHENTICATION (DEF-002, DEF-005)
+    // ------------------------------------------------------------------------
     async function executeLogin(email, password) {
       let user = null;
       const cleanEmail = email.trim().toLowerCase();
@@ -1606,7 +1865,6 @@
       updateAuthUI();
       showStatus(`🎉 Account created! Welcome, ${escapeHtml(newUser.name)}. Signed in as ${newUser.role}.`, "success");
 
-      // Re-run solver with new registered user
       currentGeneration.entries = runConstraintSolver("WEEK");
       renderAllocationsTable();
       renderAdminSchedule();
@@ -1617,6 +1875,8 @@
 
     function logout() {
       currentUser = null;
+      authToken = null;
+      try { localStorage.removeItem("chrono_token"); } catch (e) {}
       updateAuthUI();
       showStatus("You have been signed out. Welcome back to the Login Page.", "info");
     }
@@ -1630,7 +1890,7 @@
       if (!currentUser) {
         nameEl.innerText = "Guest";
         roleBadge.innerText = "Logged Out";
-        roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-700 text-slate-300";
+        roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300";
         if (dot) dot.className = "h-2 w-2 rounded-full bg-slate-500";
         authBtn.innerText = "Sign In";
         switchMainView("AUTH");
@@ -1661,9 +1921,9 @@
       }
     }
 
-    // =========================================================================
-    // CHRONOBOT: SITUATIONAL AI TIMETABLE CREATION CONTROLLER
-    // =========================================================================
+    // ------------------------------------------------------------------------
+    // CHRONOBOT AI COPILOT
+    // ------------------------------------------------------------------------
     function runBotScenario(scenarioType) {
       let promptText = "";
       let scope = "WEEK";
@@ -1696,7 +1956,6 @@
       const promptText = input.value.trim();
       if (!promptText) return;
 
-      // Auto-detect scope
       let scope = "WEEK";
       const pLower = promptText.toLowerCase();
       if (pLower.includes("tomorrow") || pLower.includes("single day") || pLower.includes("today") || pLower.includes("1 day") || pLower.includes("1-day")) {
@@ -1746,7 +2005,6 @@
       currentGeneration.status = "DRAFT";
       currentGeneration.title = `ChronoBot: ${scope} Schedule (${new Date().toLocaleTimeString()})`;
 
-      // Calculate metrics
       const totalPeriods = entries.length;
       const labCount = entries.filter(e => e.is_lab).length;
       const leisureCount = entries.filter(e => e.is_leisure).length;
@@ -1754,7 +2012,6 @@
       const totalClassrooms = classrooms.length;
       const dbRecordsCount = totalFaculty + Object.keys(allocations).length + subjects.length + totalClassrooms;
 
-      // Populate Bot Response Card
       const card = document.getElementById("bot-response-card");
       const msgEl = document.getElementById("bot-message-text");
       const badgeEl = document.getElementById("bot-badge-scenario");
@@ -1768,7 +2025,7 @@
       const botMsg = `🤖 ChronoBot Situational Report:
 I analyzed your operational instruction: " ${promptText} "
 
-• Database State Consulted: Queried ${dbRecordsCount} database entities (${totalFaculty} faculty, ${Object.keys(allocations).length} allocations, ${totalClassrooms} classrooms/labs).
+• Database Entities Consulted: Queried ${dbRecordsCount} database records (${totalFaculty} faculty, ${Object.keys(allocations).length} active allocations, ${totalClassrooms} classrooms/labs).
 • Academic Regulations Enforced:
   - Timings: 09:20 - 16:10 with 50-minute Lunch Break (12:20 - 13:10).
   - Class Duration: Exactly 1 hour per period across 6 daily periods.
@@ -1793,13 +2050,12 @@ I analyzed your operational instruction: " ${promptText} "
       document.getElementById("master-grid-section").scrollIntoView({ behavior: 'smooth' });
     }
 
-    // =========================================================================
-    // FACULTY PORTAL: NEW SEMESTER SUBJECT & YEAR CHOICE HANDLERS
-    // =========================================================================
+    // ------------------------------------------------------------------------
+    // FACULTY PREFERENCES CONTROLLER
+    // ------------------------------------------------------------------------
     function onFacultyYearChanged() {
       const yearId = parseInt(document.getElementById("fac-choice-year").value);
       const semSelect = document.getElementById("fac-choice-sem");
-      // A year has exactly 2 semesters!
       const yearSemesters = semesters.filter(s => s.year_id === yearId);
       semSelect.innerHTML = yearSemesters.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
       onFacultySemChanged();
@@ -1810,7 +2066,6 @@ I analyzed your operational instruction: " ${promptText} "
       const semId = parseInt(document.getElementById("fac-choice-sem").value);
       const subjSelect = document.getElementById("fac-choice-subject");
       
-      // Filter subjects for the faculty's department and selected semester
       const deptSubjects = subjects.filter(s => s.deptId === currentUser.deptId && s.semId === semId);
       if (deptSubjects.length > 0) {
         subjSelect.innerHTML = deptSubjects.map(s => `<option value="${s.id}">${s.code} - ${s.name} ${s.is_lab ? '[LAB]' : '[THEORY]'}</option>`).join("");
@@ -1833,7 +2088,6 @@ I analyzed your operational instruction: " ${promptText} "
         return;
       }
 
-      // Enforce 1:1 Invariant: Updates/replaces faculty's single allowed allocation
       allocations[currentUser.id] = {
         subject_id: subjId,
         dept_id: currentUser.deptId,
@@ -1852,12 +2106,13 @@ I analyzed your operational instruction: " ${promptText} "
 
       showStatus(`✓ Teaching Choice Registered: ${subObj.name} (${subObj.code}) for ${semObj.name}, Section ${secObj.name}. (Previous choice replaced per 1:1 rule).`, "success");
 
-      // Re-run solver to generate complete schedule
       currentGeneration.entries = runConstraintSolver("WEEK");
       renderFacultySchedule();
     }
 
-    // Admin Authority: Department change handler
+    // ------------------------------------------------------------------------
+    // ADMIN ALLOCATIONS CONTROLLER (DEF-002, DEF-007)
+    // ------------------------------------------------------------------------
     function onAdminDeptChanged() {
       const deptId = parseInt(document.getElementById("admin-alloc-dept").value);
       const facSelect = document.getElementById("admin-alloc-fac");
@@ -1866,7 +2121,6 @@ I analyzed your operational instruction: " ${promptText} "
       onAdminSemChanged();
     }
 
-    // Admin Authority: Semester change handler
     function onAdminSemChanged() {
       const deptId = parseInt(document.getElementById("admin-alloc-dept").value);
       const semId = parseInt(document.getElementById("admin-alloc-sem").value);
@@ -1880,7 +2134,6 @@ I analyzed your operational instruction: " ${promptText} "
       }
     }
 
-    // Admin Authority: Submit Class & Section Allocation
     async function handleAdminAllocationSubmit(e) {
       e.preventDefault();
       const facId = document.getElementById("admin-alloc-fac").value;
@@ -1919,7 +2172,6 @@ I analyzed your operational instruction: " ${promptText} "
         }
       }
 
-      // Crucial 1:1 Constraint: Update existing allocation for this teacher
       allocations[facId] = {
         subject_id: subjId,
         dept_id: deptId,
@@ -1935,13 +2187,14 @@ I analyzed your operational instruction: " ${promptText} "
 
       showStatus(`✓ Admin Allocated: ${escapeHtml(facObj ? facObj.name : facId)} assigned to '${escapeHtml(subObj ? subObj.name : subjId)}' (${escapeHtml(subObj ? subObj.code : '')}) for Section ${escapeHtml(secObj ? secObj.name : secId)}. (Previous preference replaced).`, "success");
 
-      // Re-run solver & re-render
       currentGeneration.entries = runConstraintSolver("WEEK");
       renderAllocationsTable();
       renderAdminSchedule();
     }
 
-    // Render Active Allocations Table with XSS protection (DEF-007)
+    // ------------------------------------------------------------------------
+    // TABLE RENDERING & DOM SANITIZATION (DEF-007)
+    // ------------------------------------------------------------------------
     function renderAllocationsTable() {
       const tbody = document.getElementById("allocations-table-body");
       const countEl = document.getElementById("total-allocations-count");
@@ -1957,34 +2210,46 @@ I analyzed your operational instruction: " ${promptText} "
         const sec = sections.find(s => s.id === a.sec_id);
         const sem = semesters.find(s => s.id === a.sem_id);
 
+        let deptBadge = "bg-indigo-500/15 text-indigo-400 border-indigo-500/30";
+        if (dept && dept.code === "ECE") deptBadge = "bg-cyan-500/15 text-cyan-400 border-cyan-500/30";
+        if (dept && dept.code === "EEE") deptBadge = "bg-amber-500/15 text-amber-400 border-amber-500/30";
+        if (dept && dept.code === "MECH") deptBadge = "bg-rose-500/15 text-rose-400 border-rose-500/30";
+
         html += `
-          <tr class="hover:bg-slate-800/60 transition">
-            <td class="p-2.5 font-bold text-white">${escapeHtml(fac ? fac.name : fId)}</td>
-            <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-700 text-slate-200">${escapeHtml(dept ? dept.code : "")}</span></td>
-            <td class="p-2.5 text-slate-300 font-medium">${escapeHtml(sub ? sub.code + ' - ' + sub.name : "")}</td>
-            <td class="p-2.5 text-slate-400">Yr ${escapeHtml(a.year_id)} • ${escapeHtml(sem ? sem.name : "")}</td>
-            <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">Section ${escapeHtml(sec ? sec.name : "")}</span></td>
-            <td class="p-2.5"><span class="text-[10px] text-emerald-400 font-bold">${a.authority === 'FACULTY' ? 'Faculty Chosen' : 'Admin Verified'}</span></td>
+          <tr class="hover:bg-[var(--bg-card-hover)] transition-colors duration-150">
+            <td class="p-3 font-bold text-[var(--text-main)] flex items-center gap-2">
+              <span class="h-6 w-6 rounded-lg bg-[var(--bg-elevated)] flex items-center justify-center text-xs font-mono font-bold text-indigo-400">
+                ${escapeHtml((fac ? fac.name : fId).charAt(0))}
+              </span>
+              <span>${escapeHtml(fac ? fac.name : fId)}</span>
+            </td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold border ${deptBadge}">${escapeHtml(dept ? dept.code : "")}</span></td>
+            <td class="p-3 text-[var(--text-main)] font-medium">${escapeHtml(sub ? sub.code + ' - ' + sub.name : "")}</td>
+            <td class="p-3 text-[var(--text-muted)] font-mono text-xs">Yr ${escapeHtml(a.year_id)} • ${escapeHtml(sem ? sem.name : "")}</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25">Section ${escapeHtml(sec ? sec.name : "")}</span></td>
+            <td class="p-3"><span class="text-[11px] text-emerald-400 font-bold">${a.authority === 'FACULTY' ? 'Faculty Chosen' : 'Admin Verified'}</span></td>
           </tr>
         `;
       });
       tbody.innerHTML = html;
     }
 
-    // Render Admin Global Schedule
+    // ------------------------------------------------------------------------
+    // MASTER TIMETABLE SCHEDULE RENDERER (DEF-006, DEF-007, DEF-010)
+    // ------------------------------------------------------------------------
     function renderAdminSchedule() {
       const grid = document.getElementById("admin-timetable-grid");
       const statusPill = document.getElementById("admin-status-pill");
       const pubBtn = document.getElementById("admin-publish-btn");
 
       if (currentGeneration.status === "DRAFT") {
-        statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25";
         statusPill.innerText = "Draft (Unpublished)";
         pubBtn.disabled = false;
         pubBtn.innerText = "🚀 Publish to Faculty";
       } else {
-        statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-        statusPill.innerText = "Published Live";
+        statusPill.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25";
+        statusPill.innerText = "Published Official";
         pubBtn.disabled = true;
         pubBtn.innerText = "✓ Published";
       }
@@ -2006,9 +2271,9 @@ I analyzed your operational instruction: " ${promptText} "
       document.getElementById("admin-stats-summary").innerText = `Displaying ${filtered.length} scheduled periods across filtered criteria. (Zero Blank Slots)`;
 
       let html = `
-        <div class="grid grid-cols-6 gap-2 text-xs font-semibold text-center border-b border-[var(--border,#334155)] pb-2 mb-2 text-[var(--muted-foreground,#94a3b8)]">
-          <div class="text-left font-bold text-[var(--foreground,#f8fafc)] pl-2">Period / Timings</div>
-          ${days.map(d => `<div class="font-bold text-[var(--foreground,#f8fafc)]">${d}</div>`).join("")}
+        <div class="grid grid-cols-6 gap-2 text-xs font-bold text-center border-b border-[var(--border-subtle)] pb-2.5 mb-2.5 text-[var(--text-muted)] uppercase tracking-wider">
+          <div class="text-left font-bold text-[var(--text-main)] pl-2">Period / Timings</div>
+          ${days.map(d => `<div class="font-bold text-[var(--text-main)]">${d}</div>`).join("")}
         </div>
       `;
 
@@ -2017,15 +2282,15 @@ I analyzed your operational instruction: " ${promptText} "
         
         // Slot Header with 09:20 - 16:10 timings
         html += `
-          <div class="p-2 rounded bg-[var(--card,#1e293b)] text-left border border-[var(--border,#334155)] flex flex-col justify-center">
-            <span class="font-bold text-white">${slot.name}</span>
-            <span class="text-[10px] text-indigo-300 font-mono">${slot.start} - ${slot.end}</span>
+          <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] text-left border border-[var(--border-subtle)] flex flex-col justify-center">
+            <span class="font-bold text-[var(--text-main)]">${slot.name}</span>
+            <span class="text-[10px] text-indigo-400 font-mono font-semibold">${slot.start} - ${slot.end}</span>
           </div>
         `;
 
         if (slot.isBreak) {
           html += `
-            <div class="col-span-5 p-2 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 font-medium text-center italic flex items-center justify-center">
+            <div class="col-span-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-semibold text-center italic flex items-center justify-center shadow-sm">
               🍱 Campus Lunch Break (12:20 to 13:10) • 50 mins
             </div>
           `;
@@ -2033,32 +2298,32 @@ I analyzed your operational instruction: " ${promptText} "
           for (let d = 0; d < 5; d++) {
             const matches = filtered.filter(e => e.day_of_week === d && e.slot_index === slot.index);
             if (matches.length > 0) {
-              html += `<div class="space-y-1">`;
+              html += `<div class="space-y-1.5">`;
               matches.forEach((m, idx) => {
-                let badgeClass = "bg-indigo-900/60 text-indigo-200 border-indigo-600/40";
-                let typeTag = `<span class="text-[9px] bg-indigo-500/30 text-indigo-200 px-1 rounded font-bold">THEORY</span>`;
+                let cardStyle = "bg-indigo-950/40 border-indigo-500/40 text-indigo-200 border-l-4 border-l-indigo-500";
+                let typeTag = `<span class="text-[9px] bg-indigo-500/25 text-indigo-300 px-1.5 py-0.2 rounded font-bold">THEORY</span>`;
 
                 if (m.is_lab) {
-                  badgeClass = "bg-emerald-950/70 text-emerald-200 border-emerald-500/40";
-                  typeTag = `<span class="text-[9px] bg-emerald-500/30 text-emerald-200 px-1 rounded font-bold">LAB</span>`;
+                  cardStyle = "bg-emerald-950/40 border-emerald-500/40 text-emerald-200 border-l-4 border-l-emerald-500";
+                  typeTag = `<span class="text-[9px] bg-emerald-500/25 text-emerald-300 px-1.5 py-0.2 rounded font-bold">LAB 🔬</span>`;
                 } else if (m.is_leisure) {
-                  badgeClass = "bg-amber-950/70 text-amber-200 border-amber-500/40";
-                  typeTag = `<span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded font-bold">LEISURE</span>`;
+                  cardStyle = "bg-amber-950/40 border-amber-500/40 text-amber-200 border-l-4 border-l-amber-500";
+                  typeTag = `<span class="text-[9px] bg-amber-500/25 text-amber-300 px-1.5 py-0.2 rounded font-bold">LEISURE ⚽</span>`;
                 }
 
                 html += `
-                  <div class="p-2 rounded-lg border ${badgeClass} text-left text-xs shadow-sm">
-                    <div class="font-bold text-white flex justify-between items-center">
-                      <span>${escapeHtml(m.subject_code)}</span>
+                  <div class="p-2.5 rounded-xl border ${cardStyle} text-left text-xs shadow-sm hover:scale-[1.01] transition-transform">
+                    <div class="font-bold text-[var(--text-main)] flex justify-between items-center">
+                      <span class="font-mono">${escapeHtml(m.subject_code)}</span>
                       <div class="flex gap-1">
                         ${typeTag}
-                        <span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded font-bold">Sec ${escapeHtml(m.section_name)}</span>
+                        <span class="text-[9px] bg-amber-500/25 text-amber-300 px-1.5 py-0.2 rounded font-bold">Sec ${escapeHtml(m.section_name)}</span>
                       </div>
                     </div>
-                    <div class="text-[11px] truncate font-medium text-slate-200">${escapeHtml(m.faculty_name)}</div>
-                    <div class="text-[10px] opacity-75 flex justify-between mt-0.5">
+                    <div class="text-[11px] truncate font-medium text-slate-200 mt-0.5">${escapeHtml(m.faculty_name)}</div>
+                    <div class="text-[10px] opacity-80 flex justify-between mt-1 pt-1 border-t border-white/10">
                       <span>${escapeHtml(m.department_code)} • ${escapeHtml(m.semester_name)}</span>
-                      <span class="font-mono text-[9px]">${escapeHtml(m.classroom_name)}</span>
+                      <span class="font-mono text-[9px] bg-black/30 px-1 rounded">${escapeHtml(m.classroom_name)}</span>
                     </div>
                   </div>
                 `;
@@ -2066,8 +2331,8 @@ I analyzed your operational instruction: " ${promptText} "
               html += `</div>`;
             } else {
               html += `
-                <div class="p-2 rounded-lg border border-dashed border-[var(--border,#334155)]/50 text-center text-[var(--muted-foreground,#94a3b8)]/30 text-[11px] flex items-center justify-center">
-                  -
+                <div class="p-2.5 rounded-xl border border-dashed border-[var(--border-subtle)] text-center text-[var(--text-faint)] text-[11px] flex items-center justify-center font-mono">
+                  Available
                 </div>
               `;
             }
@@ -2079,7 +2344,9 @@ I analyzed your operational instruction: " ${promptText} "
       grid.innerHTML = html;
     }
 
-    // Render Faculty Personal Timetable with XSS protection (DEF-007)
+    // ------------------------------------------------------------------------
+    // FACULTY SCHEDULE RENDERER (DEF-006, DEF-007)
+    // ------------------------------------------------------------------------
     function renderFacultySchedule() {
       if (!currentUser || currentUser.role !== "FACULTY") return;
 
@@ -2088,19 +2355,21 @@ I analyzed your operational instruction: " ${promptText} "
       const totalHoursSpan = document.getElementById("fac-total-hours");
 
       if (currentGeneration.status === "DRAFT") {
-        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
+        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25";
         badge.innerText = "⏳ Status: Draft Pending Admin Release";
         grid.innerHTML = `
-          <div class="p-8 text-center text-sm text-[var(--muted-foreground,#94a3b8)]">
-            <div class="text-3xl mb-2">🔒</div>
-            <strong class="text-white block mb-1">Schedule Not Published Yet</strong>
-            This timetable is currently undergoing administrative review. It will become visible once institution administrators publish it.
+          <div class="p-8 text-center text-sm text-[var(--text-muted)] space-y-2">
+            <div class="text-3xl">🔒</div>
+            <strong class="text-[var(--text-main)] block text-base">Schedule Under Administrative Review</strong>
+            <p class="max-w-md mx-auto text-xs">
+              This timetable is currently undergoing administrative verification. It will become visible once the dean or administrator publishes the official master schedule.
+            </p>
           </div>
         `;
         return;
       }
 
-      badge.className = "text-xs px-2.5 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+      badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25";
       badge.innerText = "✓ Status: Published (Official)";
 
       let entries = currentGeneration.entries.filter(e => e.faculty_id === currentUser.id);
@@ -2110,9 +2379,9 @@ I analyzed your operational instruction: " ${promptText} "
       const dayIndices = facultyViewScope === "DAY" ? [facultySelectedDay] : [0, 1, 2, 3, 4];
 
       let html = `
-        <div class="grid grid-cols-${activeDays.length + 1} gap-2 text-xs font-semibold text-center border-b border-[var(--border,#334155)] pb-2 mb-2 text-[var(--muted-foreground,#94a3b8)]">
-          <div class="text-left font-bold text-[var(--foreground,#f8fafc)] pl-2">Period / Timings</div>
-          ${activeDays.map(d => `<div class="font-bold text-[var(--foreground,#f8fafc)]">${d}</div>`).join("")}
+        <div class="grid grid-cols-${activeDays.length + 1} gap-2 text-xs font-bold text-center border-b border-[var(--border-subtle)] pb-2.5 mb-2.5 text-[var(--text-muted)] uppercase tracking-wider">
+          <div class="text-left font-bold text-[var(--text-main)] pl-2">Period / Timings</div>
+          ${activeDays.map(d => `<div class="font-bold text-[var(--text-main)]">${d}</div>`).join("")}
         </div>
       `;
 
@@ -2120,15 +2389,15 @@ I analyzed your operational instruction: " ${promptText} "
         html += `<div class="grid grid-cols-${activeDays.length + 1} gap-2 mb-2 items-center text-xs">`;
         
         html += `
-          <div class="p-2 rounded bg-[var(--card,#1e293b)] text-left border border-[var(--border,#334155)]">
-            <span class="font-bold text-white block">${slot.name}</span>
-            <span class="text-[10px] text-indigo-300 font-mono">${slot.start} - ${slot.end}</span>
+          <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] text-left border border-[var(--border-subtle)]">
+            <span class="font-bold text-[var(--text-main)] block">${slot.name}</span>
+            <span class="text-[10px] text-indigo-400 font-mono font-semibold">${slot.start} - ${slot.end}</span>
           </div>
         `;
 
         if (slot.isBreak) {
           html += `
-            <div class="col-span-${activeDays.length} p-2 rounded-lg bg-amber-950/20 border border-amber-500/30 text-amber-300 font-medium text-center italic">
+            <div class="col-span-${activeDays.length} p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-semibold text-center italic shadow-sm">
               🍱 Campus Lunch Break (12:20 to 13:10)
             </div>
           `;
@@ -2138,16 +2407,16 @@ I analyzed your operational instruction: " ${promptText} "
             if (match) {
               const isLab = match.is_lab;
               html += `
-                <div class="p-2.5 rounded-lg border ${isLab ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-200' : 'bg-indigo-900/60 border-indigo-600/40 text-indigo-200'} shadow-sm text-left">
-                  <div class="font-bold text-white flex items-center justify-between">
-                    <span>${escapeHtml(match.subject_code)}</span>
+                <div class="p-2.5 rounded-xl border ${isLab ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200 border-l-4 border-l-emerald-500' : 'bg-indigo-950/40 border-indigo-500/40 text-indigo-200 border-l-4 border-l-indigo-500'} shadow-sm text-left hover:scale-[1.01] transition-transform">
+                  <div class="font-bold text-[var(--text-main)] flex items-center justify-between">
+                    <span class="font-mono">${escapeHtml(match.subject_code)}</span>
                     <div class="flex gap-1">
-                      <span class="text-[9px] ${isLab ? 'bg-emerald-500/30 text-emerald-200' : 'bg-indigo-500/30 text-indigo-200'} px-1 rounded font-bold">${isLab ? 'LAB' : 'THEORY'}</span>
-                      <span class="text-[9px] bg-amber-500/30 text-amber-200 px-1 rounded font-bold">Sec ${escapeHtml(match.section_name)}</span>
+                      <span class="text-[9px] ${isLab ? 'bg-emerald-500/25 text-emerald-300' : 'bg-indigo-500/25 text-indigo-300'} px-1.5 py-0.2 rounded font-bold">${isLab ? 'LAB' : 'THEORY'}</span>
+                      <span class="text-[9px] bg-amber-500/25 text-amber-300 px-1.5 py-0.2 rounded font-bold">Sec ${escapeHtml(match.section_name)}</span>
                     </div>
                   </div>
-                  <div class="text-[11px] truncate opacity-90">${escapeHtml(match.subject_name)}</div>
-                  <div class="text-[10px] mt-1 opacity-75 flex justify-between">
+                  <div class="text-[11px] truncate opacity-90 mt-0.5">${escapeHtml(match.subject_name)}</div>
+                  <div class="text-[10px] mt-1 pt-1 border-t border-white/10 opacity-80 flex justify-between">
                     <span>${escapeHtml(match.department_code)} • ${escapeHtml(match.semester_name)}</span>
                     <span class="font-mono bg-black/40 px-1 rounded">${escapeHtml(match.classroom_name)}</span>
                   </div>
@@ -2155,7 +2424,7 @@ I analyzed your operational instruction: " ${promptText} "
               `;
             } else {
               html += `
-                <div class="p-2 rounded-lg border border-dashed border-[var(--border,#334155)]/50 text-center text-[var(--muted-foreground,#94a3b8)]/40 text-[11px] h-full flex items-center justify-center">
+                <div class="p-2.5 rounded-xl border border-dashed border-[var(--border-subtle)] text-center text-[var(--text-faint)] text-[11px] h-full flex items-center justify-center font-mono">
                   Free
                 </div>
               `;
@@ -2170,9 +2439,9 @@ I analyzed your operational instruction: " ${promptText} "
 
     function setFacultyViewScope(scope) {
       facultyViewScope = scope;
-      document.getElementById("btn-scope-day").className = scope === 'DAY' ? "px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--muted-foreground,#94a3b8)]";
-      document.getElementById("btn-scope-week").className = scope === 'WEEK' ? "px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--muted-foreground,#94a3b8)]";
-      document.getElementById("btn-scope-year").className = scope === 'YEAR' ? "px-3 py-1.5 rounded-lg font-semibold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--muted-foreground,#94a3b8)]";
+      document.getElementById("btn-scope-day").className = scope === 'DAY' ? "px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--text-muted)]";
+      document.getElementById("btn-scope-week").className = scope === 'WEEK' ? "px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--text-muted)]";
+      document.getElementById("btn-scope-year").className = scope === 'YEAR' ? "px-3 py-1.5 rounded-lg font-bold bg-indigo-600 text-white shadow" : "px-3 py-1.5 rounded-lg text-[var(--text-muted)]";
 
       const dayFilter = document.getElementById("fac-day-filter-container");
       if (scope === "DAY") {
@@ -2186,7 +2455,7 @@ I analyzed your operational instruction: " ${promptText} "
     function selectFacultyDay(dayIdx) {
       facultySelectedDay = dayIdx;
       document.querySelectorAll(".fac-day-pill").forEach((pill, idx) => {
-        pill.className = idx === dayIdx ? "fac-day-pill px-3 py-1 rounded-lg text-xs bg-indigo-600 text-white font-semibold" : "fac-day-pill px-3 py-1 rounded-lg text-xs text-[var(--muted-foreground,#94a3b8)]";
+        pill.className = idx === dayIdx ? "fac-day-pill px-3 py-1.5 rounded-xl text-xs bg-indigo-600 text-white font-bold shadow" : "fac-day-pill px-3 py-1.5 rounded-xl text-xs text-[var(--text-muted)] font-semibold";
       });
       renderFacultySchedule();
     }
@@ -2205,11 +2474,13 @@ I analyzed your operational instruction: " ${promptText} "
       }
     }
 
+    // ------------------------------------------------------------------------
+    // API TRIGGER GENERATION & PUBLISHING (DEF-002)
+    // ------------------------------------------------------------------------
     async function triggerGeneration() {
       const scope = document.getElementById("admin-gen-scope").value;
-      const targetDate = document.getElementById("admin-target-date").value || "2026-10-19";
+      const targetDate = document.getElementById("admin-gen-date").value || "2026-10-19";
 
-      // Attempt Backend REST API Generation (DEF-002)
       if (authToken) {
         try {
           const resp = await fetch("/api/admin/generate", {
@@ -2245,7 +2516,6 @@ I analyzed your operational instruction: " ${promptText} "
     }
 
     async function publishSchedule() {
-      // Attempt Backend REST API Publish (DEF-002)
       if (authToken) {
         try {
           const resp = await fetch("/api/admin/publish", {
@@ -2273,6 +2543,9 @@ I analyzed your operational instruction: " ${promptText} "
       renderFacultySchedule();
     }
 
+    // ------------------------------------------------------------------------
+    // CSV EXPORT (DEPARTMENT & SECTION COLS)
+    // ------------------------------------------------------------------------
     function exportToCSV() {
       let csv = "Entry ID,Day,Period,Start Time,End Time,Department,Section,Year,Semester,Subject Code,Subject Name,Faculty Member,Classroom,Type\n";
       currentGeneration.entries.forEach(e => {
@@ -2291,22 +2564,55 @@ I analyzed your operational instruction: " ${promptText} "
       showStatus(`📥 Timetable CSV exported with Department and Section columns.`, "info");
     }
 
-    function showStatus(msg, type) {
-      const banner = document.getElementById("status-banner");
-      const msgSpan = document.getElementById("status-message");
+    // ------------------------------------------------------------------------
+    // FLOATING TOAST NOTIFICATIONS
+    // ------------------------------------------------------------------------
+    let toastTimeout = null;
+    function showStatus(msg, type = "info") {
+      const toast = document.getElementById("status-toast");
+      const msgSpan = document.getElementById("toast-message");
+      const iconSpan = document.getElementById("toast-icon");
+      const titleSpan = document.getElementById("toast-title");
+
+      if (!toast || !msgSpan) return;
+
       msgSpan.innerText = msg;
-      banner.classList.remove("hidden");
+
+      let borderColor = "border-indigo-500/50";
+      let bgGrad = "from-indigo-950/95 to-slate-900/95";
+      let textCol = "text-indigo-200";
+      let icon = "✨";
+      let title = "System Notification";
+
       if (type === "success") {
-        banner.className = "rounded-xl p-4 text-xs font-semibold border transition-all flex items-center justify-between shadow-md bg-emerald-950/40 border-emerald-500/40 text-emerald-300";
+        borderColor = "border-emerald-500/50";
+        bgGrad = "from-emerald-950/95 to-slate-900/95";
+        textCol = "text-emerald-300";
+        icon = "✓";
+        title = "Action Successful";
       } else if (type === "error") {
-        banner.className = "rounded-xl p-4 text-xs font-semibold border transition-all flex items-center justify-between shadow-md bg-rose-950/40 border-rose-500/40 text-rose-300";
-      } else {
-        banner.className = "rounded-xl p-4 text-xs font-semibold border transition-all flex items-center justify-between shadow-md bg-indigo-950/40 border-indigo-500/40 text-indigo-300";
+        borderColor = "border-rose-500/50";
+        bgGrad = "from-rose-950/95 to-slate-900/95";
+        textCol = "text-rose-300";
+        icon = "✕";
+        title = "Attention Required";
       }
+
+      toast.className = `fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl bg-gradient-to-r ${bgGrad} border ${borderColor} shadow-2xl backdrop-blur-2xl flex items-start gap-3 transition-all duration-300 transform translate-y-0 opacity-100 ${textCol}`;
+      iconSpan.innerText = icon;
+      titleSpan.innerText = title;
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        dismissStatus();
+      }, 5000);
     }
 
     function dismissStatus() {
-      document.getElementById("status-banner").classList.add("hidden");
+      const toast = document.getElementById("status-toast");
+      if (toast) {
+        toast.className = "fixed bottom-6 right-6 z-50 max-w-md p-4 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all duration-300 transform translate-y-8 opacity-0 pointer-events-none";
+      }
     }
 
     window.addEventListener("DOMContentLoaded", init);
