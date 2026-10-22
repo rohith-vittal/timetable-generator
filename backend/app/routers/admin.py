@@ -14,6 +14,12 @@ from app.schemas import (
     BotScenarioRequest,
     BotScenarioResponse,
     BotInsightMetrics,
+    InstitutionalDataImport,
+    DatabaseStatsResponse,
+    DepartmentInput,
+    SubjectInput,
+    ClassroomInput,
+    FacultyInput,
 )
 from app.models import (
     TimetableGeneration,
@@ -459,4 +465,101 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
         ),
         insights=insights,
     )
+
+# ----------------------------------------------------------------------
+# Institutional Database Management & Original Data Import
+# ----------------------------------------------------------------------
+@router.get(
+    "/database/status",
+    response_model=DatabaseStatsResponse,
+    summary="Get Database State & Statistics",
+    description="Returns live statistics showing whether the system is running on demo/mock data or custom real institutional data."
+)
+def get_database_status(current_admin: User = Depends(require_admin)):
+    stats = db.get_database_stats()
+    return DatabaseStatsResponse(**stats)
+
+@router.get(
+    "/database/template",
+    summary="Download Real Data Template (JSON)",
+    description="Returns a structured template showing exactly how to format original institutional data for bulk import."
+)
+def get_real_data_template(current_admin: User = Depends(require_admin)):
+    return db.export_data_template()
+
+@router.post(
+    "/database/clear-mock",
+    summary="Purge All Mock / Demo Data",
+    description="Removes all fake faculty members, fake subjects, fake classrooms, allocations, and generated timetables, providing an empty canvas for real data."
+)
+def clear_mock_data(current_admin: User = Depends(require_admin)):
+    result = db.clear_mock_data(preserve_admin=True)
+    return result
+
+@router.post(
+    "/database/reset-demo",
+    summary="Restore Original Demo Data",
+    description="Restores the pre-packaged demo dataset (Turing, Hopper, Tesla, CS101, etc.) for testing."
+)
+def reset_demo_data(current_admin: User = Depends(require_admin)):
+    result = db.reset_to_demo_data()
+    return result
+
+@router.post(
+    "/database/import",
+    summary="Import Real Institutional Data",
+    description="Uploads and saves real college data: departments, faculty, subjects, classrooms, and allocations in one atomic operation."
+)
+def import_institutional_data(payload: InstitutionalDataImport, current_admin: User = Depends(require_admin)):
+    try:
+        data_dict = payload.model_dump(mode="json")
+        result = db.import_institutional_data(data_dict)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to import institutional data: {str(e)}"
+        )
+
+@router.post(
+    "/database/add-department",
+    summary="Add Real Department",
+)
+def add_real_department(payload: DepartmentInput, current_admin: User = Depends(require_admin)):
+    try:
+        dept = db.add_department(code=payload.code, name=payload.name)
+        return dept
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post(
+    "/database/add-subject",
+    summary="Add Real Subject",
+)
+def add_real_subject(payload: SubjectInput, current_admin: User = Depends(require_admin)):
+    try:
+        sub = db.add_subject(
+            code=payload.code,
+            name=payload.name,
+            department_code=payload.department_code,
+            semester_id=payload.semester_id,
+            is_lab=payload.is_lab,
+            weekly_hours=payload.weekly_hours,
+        )
+        return sub
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post(
+    "/database/add-classroom",
+    summary="Add Real Classroom or Lab",
+)
+def add_real_classroom(payload: ClassroomInput, current_admin: User = Depends(require_admin)):
+    room = db.add_classroom(
+        room_number=payload.room_number,
+        building=payload.building,
+        capacity=payload.capacity,
+    )
+    return room
+
 

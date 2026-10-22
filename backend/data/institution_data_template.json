@@ -1,0 +1,112 @@
+{
+  "clear_existing_mock_data": true,
+  "admin_email": "admin@mycollege.edu",
+  "admin_password": "ChangeThisPassword123!",
+  "admin_name": "Dean of Academics",
+  "departments": [
+    {
+      "code": "CSE",
+      "name": "Computer Science & Engineering"
+    },
+    {
+      "code": "ECE",
+      "name": "Electronics & Communication Engineering"
+    },
+    {
+      "code": "EEE",
+      "name": "Electrical & Electronics Engineering"
+    },
+    {
+      "code": "MECH",
+      "name": "Mechanical Engineering"
+    },
+    {
+      "code": "CIVIL",
+      "name": "Civil Engineering"
+    },
+    {
+      "code": "IT",
+      "name": "Information Technology"
+    }
+  ],
+  "classrooms": [
+    {
+      "room_number": "Room 101 (Lecture Hall)",
+      "building": "Academic Block A",
+      "capacity": 70
+    },
+    {
+      "room_number": "Room 102 (Lecture Hall)",
+      "building": "Academic Block A",
+      "capacity": 70
+    },
+    {
+      "room_number": "Room 103 (Lecture Hall)",
+      "building": "Academic Block A",
+      "capacity": 70
+    },
+    {
+      "room_number": "CS-Lab-1 (Computing Lab)",
+      "building": "Tech Center",
+      "capacity": 60
+    },
+    {
+      "room_number": "EC-Lab-1 (Hardware Lab)",
+      "building": "Tech Center",
+      "capacity": 60
+    }
+  ],
+  "faculty": [
+    {
+      "full_name": "Prof. John Doe",
+      "email": "john.doe@mycollege.edu",
+      "department_code": "CSE",
+      "password": "facultyPassword123"
+    },
+    {
+      "full_name": "Dr. Jane Smith",
+      "email": "jane.smith@mycollege.edu",
+      "department_code": "CSE",
+      "password": "facultyPassword123"
+    },
+    {
+      "full_name": "Dr. Robert Lee",
+      "email": "robert.lee@mycollege.edu",
+      "department_code": "ECE",
+      "password": "facultyPassword123"
+    }
+  ],
+  "subjects": [
+    {
+      "code": "CS101",
+      "name": "Programming in Python",
+      "department_code": "CSE",
+      "semester_id": 1,
+      "weekly_hours": 3,
+      "is_lab": false
+    },
+    {
+      "code": "CS101L",
+      "name": "Python Programming Lab",
+      "department_code": "CSE",
+      "semester_id": 1,
+      "weekly_hours": 3,
+      "is_lab": true
+    },
+    {
+      "code": "EC101",
+      "name": "Digital Logic Design",
+      "department_code": "ECE",
+      "semester_id": 1,
+      "weekly_hours": 3,
+      "is_lab": false
+    }
+  ],
+  "allocations": [
+    {
+      "faculty_email": "john.doe@mycollege.edu",
+      "subject_code": "CS101",
+      "section_name": "A"
+    }
+  ]
+}

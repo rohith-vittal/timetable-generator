@@ -164,3 +164,60 @@ class BotScenarioResponse(BaseModel):
     generation: TimetableGenerationResponse
     insights: BotInsightMetrics
 
+# -------------------------------------------------------------
+# Institutional Real Data Import & Database Management Schemas
+# -------------------------------------------------------------
+class DepartmentInput(BaseModel):
+    code: str = Field(..., json_schema_extra={"example": "CSE"})
+    name: str = Field(..., json_schema_extra={"example": "Computer Science & Engineering"})
+
+class FacultyInput(BaseModel):
+    full_name: str = Field(..., json_schema_extra={"example": "Dr. Sarah Connor"})
+    email: str = Field(..., json_schema_extra={"example": "sarah.connor@college.edu"})
+    department_code: str = Field(..., json_schema_extra={"example": "CSE"})
+    password: Optional[str] = Field(default="faculty123", json_schema_extra={"example": "faculty123"})
+
+class SubjectInput(BaseModel):
+    code: str = Field(..., json_schema_extra={"example": "CS101"})
+    name: str = Field(..., json_schema_extra={"example": "Programming Fundamentals"})
+    department_code: str = Field(..., json_schema_extra={"example": "CSE"})
+    semester_id: int = Field(..., json_schema_extra={"example": 1}, description="Semester number 1 to 8")
+    weekly_hours: int = Field(default=3, description="Weekly hours (typically 3 or 4)")
+    is_lab: bool = Field(default=False, description="True if laboratory practical session")
+
+class ClassroomInput(BaseModel):
+    room_number: str = Field(..., json_schema_extra={"example": "LH-101 (Lecture Hall)"})
+    building: str = Field(default="Main Academic Block", json_schema_extra={"example": "Block A"})
+    capacity: int = Field(default=60)
+
+class AllocationInput(BaseModel):
+    faculty_email: str = Field(..., json_schema_extra={"example": "sarah.connor@college.edu"})
+    subject_code: str = Field(..., json_schema_extra={"example": "CS101"})
+    section_name: str = Field(default="A", json_schema_extra={"example": "A"})
+    year_id: Optional[int] = Field(default=None)
+    semester_id: Optional[int] = Field(default=None)
+
+class InstitutionalDataImport(BaseModel):
+    clear_existing_mock_data: bool = Field(default=True, description="Whether to purge mock faculty, subjects, and rooms first")
+    admin_email: Optional[str] = Field(default=None, description="Optional custom admin email")
+    admin_password: Optional[str] = Field(default=None, description="Optional custom admin password")
+    admin_name: Optional[str] = Field(default=None, description="Optional custom admin name")
+    departments: Optional[List[DepartmentInput]] = Field(default=None, description="Real college departments")
+    faculty: List[FacultyInput] = Field(..., description="Real college faculty list")
+    subjects: List[SubjectInput] = Field(..., description="Real curriculum subjects")
+    classrooms: Optional[List[ClassroomInput]] = Field(default=None, description="Real lecture halls and lab rooms")
+    allocations: Optional[List[AllocationInput]] = Field(default=None, description="Initial subject-faculty assignments")
+
+class DatabaseStatsResponse(BaseModel):
+    total_departments: int
+    total_sections: int
+    total_faculty: int
+    total_subjects: int
+    total_classrooms: int
+    total_allocations: int
+    total_generations: int
+    is_demo_mode: bool
+    status: str
+    message: str
+
+

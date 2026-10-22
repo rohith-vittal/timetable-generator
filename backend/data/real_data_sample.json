@@ -1,0 +1,60 @@
+{
+  "clear_existing_mock_data": true,
+  "admin_email": "admin@apexuniversity.edu",
+  "admin_password": "ApexAdmin2026!",
+  "admin_name": "Prof. David Miller (Dean of Academic Affairs)",
+  "departments": [
+    { "code": "CSE", "name": "Computer Science & Engineering" },
+    { "code": "ECE", "name": "Electronics & Communication Engineering" },
+    { "code": "EEE", "name": "Electrical & Electronics Engineering" },
+    { "code": "MECH", "name": "Mechanical Engineering" },
+    { "code": "CIVIL", "name": "Civil Engineering" },
+    { "code": "IT", "name": "Information Technology" }
+  ],
+  "classrooms": [
+    { "room_number": "Auditorium-101", "building": "Academic Complex", "capacity": 120 },
+    { "room_number": "LH-201 (Lecture Hall)", "building": "Ramanujan Block", "capacity": 70 },
+    { "room_number": "LH-202 (Lecture Hall)", "building": "Ramanujan Block", "capacity": 70 },
+    { "room_number": "LH-203 (Lecture Hall)", "building": "Ramanujan Block", "capacity": 70 },
+    { "room_number": "LH-301 (Lecture Hall)", "building": "Kalam Block", "capacity": 65 },
+    { "room_number": "LH-302 (Lecture Hall)", "building": "Kalam Block", "capacity": 65 },
+    { "room_number": "LH-303 (Lecture Hall)", "building": "Kalam Block", "capacity": 65 },
+    { "room_number": "CSE-Lab-01 (Advanced Computing)", "building": "Turing Center", "capacity": 60 },
+    { "room_number": "CSE-Lab-02 (AI & Data Systems)", "building": "Turing Center", "capacity": 60 },
+    { "room_number": "ECE-Lab-01 (Embedded & DSP)", "building": "Bose Pavilion", "capacity": 60 },
+    { "room_number": "EEE-Lab-01 (Power & Machines)", "building": "Faraday Works", "capacity": 60 },
+    { "room_number": "MECH-Lab-01 (Thermal & CAD/CAM)", "building": "Watt Facility", "capacity": 60 }
+  ],
+  "faculty": [
+    { "full_name": "Dr. Rajesh Sharma", "email": "rajesh.sharma@apexuniversity.edu", "department_code": "CSE", "password": "faculty123" },
+    { "full_name": "Prof. Anita Desai", "email": "anita.desai@apexuniversity.edu", "department_code": "CSE", "password": "faculty123" },
+    { "full_name": "Dr. Vikram Seth", "email": "vikram.seth@apexuniversity.edu", "department_code": "CSE", "password": "faculty123" },
+    { "full_name": "Dr. Priya Nair", "email": "priya.nair@apexuniversity.edu", "department_code": "ECE", "password": "faculty123" },
+    { "full_name": "Prof. Arvind Rao", "email": "arvind.rao@apexuniversity.edu", "department_code": "ECE", "password": "faculty123" },
+    { "full_name": "Dr. Sunita Patel", "email": "sunita.patel@apexuniversity.edu", "department_code": "EEE", "password": "faculty123" },
+    { "full_name": "Prof. Manoj Verma", "email": "manoj.verma@apexuniversity.edu", "department_code": "EEE", "password": "faculty123" },
+    { "full_name": "Dr. Sanjay Kulkarni", "email": "sanjay.kulkarni@apexuniversity.edu", "department_code": "MECH", "password": "faculty123" },
+    { "full_name": "Prof. Meera Joshi", "email": "meera.joshi@apexuniversity.edu", "department_code": "MECH", "password": "faculty123" }
+  ],
+  "subjects": [
+    { "code": "CS101", "name": "Object Oriented Programming in Java", "department_code": "CSE", "semester_id": 1, "weekly_hours": 3, "is_lab": false },
+    { "code": "CS101L", "name": "Java Programming Laboratory", "department_code": "CSE", "semester_id": 1, "weekly_hours": 3, "is_lab": true },
+    { "code": "CS201", "name": "Data Structures & Algorithms", "department_code": "CSE", "semester_id": 3, "weekly_hours": 4, "is_lab": false },
+    { "code": "CS201L", "name": "Data Structures Laboratory", "department_code": "CSE", "semester_id": 3, "weekly_hours": 3, "is_lab": true },
+    { "code": "CS301", "name": "Operating Systems & Cloud Architecture", "department_code": "CSE", "semester_id": 5, "weekly_hours": 4, "is_lab": false },
+    { "code": "EC101", "name": "Digital Logic and Microprocessors", "department_code": "ECE", "semester_id": 1, "weekly_hours": 3, "is_lab": false },
+    { "code": "EC101L", "name": "Digital Systems Laboratory", "department_code": "ECE", "semester_id": 1, "weekly_hours": 3, "is_lab": true },
+    { "code": "EE101", "name": "Network Theory and Electrical Circuits", "department_code": "EEE", "semester_id": 1, "weekly_hours": 3, "is_lab": false },
+    { "code": "EE101L", "name": "Circuits and Simulation Lab", "department_code": "EEE", "semester_id": 1, "weekly_hours": 3, "is_lab": true },
+    { "code": "ME101", "name": "Applied Thermodynamics & Fluid Mechanics", "department_code": "MECH", "semester_id": 1, "weekly_hours": 3, "is_lab": false },
+    { "code": "ME101L", "name": "Thermal Engineering Laboratory", "department_code": "MECH", "semester_id": 1, "weekly_hours": 3, "is_lab": true }
+  ],
+  "allocations": [
+    { "faculty_email": "rajesh.sharma@apexuniversity.edu", "subject_code": "CS101", "section_name": "A" },
+    { "faculty_email": "anita.desai@apexuniversity.edu", "subject_code": "CS201", "section_name": "B" },
+    { "faculty_email": "vikram.seth@apexuniversity.edu", "subject_code": "CS301", "section_name": "A" },
+    { "faculty_email": "priya.nair@apexuniversity.edu", "subject_code": "EC101", "section_name": "C" },
+    { "faculty_email": "sunita.patel@apexuniversity.edu", "subject_code": "EE101", "section_name": "D" },
+    { "faculty_email": "sanjay.kulkarni@apexuniversity.edu", "subject_code": "ME101", "section_name": "E" }
+  ]
+}
