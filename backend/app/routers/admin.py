@@ -134,7 +134,7 @@ def generate_timetable(payload: GenerationRequest, current_admin: User = Depends
         entries=entries,
     )
 
-    db.generations[gen_id] = generation
+    db.save_generation(generation)
 
     return TimetableGenerationResponse(
         id=generation.id,
@@ -163,6 +163,7 @@ def publish_timetable(generation_id: str, current_admin: User = Depends(require_
     gen = db.generations[generation_id]
     gen.status = ScheduleStatus.PUBLISHED
     gen.published_at = datetime.now(timezone.utc)
+    db._save_to_disk()
 
     return TimetableGenerationResponse(
         id=gen.id,
@@ -384,7 +385,7 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
         created_by="ChronoBot AI Assistant",
         entries=entries,
     )
-    db.generations[gen_id] = generation
+    db.save_generation(generation)
 
     # 6. Calculate Metrics
     unique_cohorts = len(set((e.department_id, e.semester_id, e.section_id) for e in entries))

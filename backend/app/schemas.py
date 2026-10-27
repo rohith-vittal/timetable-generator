@@ -16,12 +16,14 @@ class UserProfile(BaseModel):
     id: str
     email: str
     full_name: str
+    name: Optional[str] = None
     role: UserRole
     department: str
     department_code: str
 
 class LoginResponse(BaseModel):
     token: str
+    access_token: Optional[str] = None
     user: UserProfile
 
 # -------------------------------------------------------------
@@ -219,5 +221,7 @@ class DatabaseStatsResponse(BaseModel):
     is_demo_mode: bool
     status: str
     message: str
+    database_engine: Optional[str] = "SQLite (SQLAlchemy Relational)"
+    database_target: Optional[str] = None
 
 

@@ -42,6 +42,8 @@ def show_status():
     print_banner()
     stats = db.get_database_stats()
     print(f"\n[Database Status]: {stats['status']}")
+    print(f"[Database Engine]: {stats.get('database_engine', 'SQLite (SQLAlchemy Relational)')}")
+    print(f"[Database Target]: {stats.get('database_target', str(backend_dir / 'data' / 'timetable.db'))}")
     print(f"[Mode]: {'DEMO / MOCK DATA (Alan Turing, Grace Hopper, etc.)' if stats['is_demo_mode'] else 'ORIGINAL / REAL INSTITUTIONAL DATA'}")
     print("-" * 50)
     print(f"  • Total Departments: {stats['total_departments']}")
@@ -52,7 +54,8 @@ def show_status():
     print(f"  • Total Allocations: {stats['total_allocations']}")
     print(f"  • Timetables:        {stats['total_generations']}")
     print("-" * 50)
-    print(f"Storage File: {backend_dir / 'data' / 'timetable_store.json'}\n")
+    print(f"Relational DB: {backend_dir / 'data' / 'timetable.db'}")
+    print(f"JSON Backup:   {backend_dir / 'data' / 'timetable_store.json'}\n")
 
 def clear_mock():
     print_banner()

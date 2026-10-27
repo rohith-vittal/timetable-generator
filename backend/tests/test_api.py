@@ -150,6 +150,11 @@ def test_admin_generation_publishing_and_section_filtering():
     assert "Section A" in csv_res.text
 
 def test_auth_register_faculty_and_admin():
+    from app.storage import db
+    for uid, u in list(db.users.items()):
+        if u.email in ["sarah.connor@univ.edu", "admin.assistant@university.edu"]:
+            db.users.pop(uid, None)
+
     # 1. Register a new faculty member
     fac_payload = {
         "email": "sarah.connor@univ.edu",
@@ -208,4 +213,23 @@ def test_admin_bot_situational_generation():
     assert data["insights"]["total_periods_scheduled"] > 0
     assert data["insights"]["database_records_consulted"] > 0
     assert len(data["generation"]["entries"]) > 0
+
+def test_auth_guard_invalid_token_rejected():
+    res = client.post(
+        "/api/admin/generate",
+        json={"title": "Test Schedule", "scope": "WEEK", "academic_year_id": 1},
+        headers={"Authorization": "Bearer bad-token-12345"}
+    )
+    assert res.status_code == 401
+    assert "Invalid or expired session token" in res.json()["detail"]
+
+def test_faculty_cannot_access_admin_endpoint():
+    res = client.post(
+        "/api/admin/generate",
+        json={"title": "Test Schedule", "scope": "WEEK", "academic_year_id": 1},
+        headers={"Authorization": "Bearer tok-faculty-valid-session"}
+    )
+    assert res.status_code == 403
+    assert "Administrative privileges required" in res.json()["detail"]
+
 

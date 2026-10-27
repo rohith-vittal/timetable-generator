@@ -33,10 +33,12 @@ def register(payload: RegisterRequest):
     db.active_sessions[token] = new_user
     return LoginResponse(
         token=token,
+        access_token=token,
         user=UserProfile(
             id=new_user.id,
             email=new_user.email,
             full_name=new_user.full_name,
+            name=new_user.full_name,
             role=new_user.role,
             department=new_user.department,
             department_code=new_user.department_code,
@@ -76,10 +78,12 @@ def login(payload: LoginRequest):
 
     return LoginResponse(
         token=token,
+        access_token=token,
         user=UserProfile(
             id=matched_user.id,
             email=matched_user.email,
             full_name=matched_user.full_name,
+            name=matched_user.full_name,
             role=matched_user.role,
             department=matched_user.department,
             department_code=matched_user.department_code,

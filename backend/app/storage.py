@@ -5,7 +5,7 @@ and 6-section (A through F) structure, enforcing the 1:1 faculty-subject constra
 Pre-populated with rich mock academic data for immediate out-of-the-box execution.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from datetime import date, datetime, timezone
 from dataclasses import asdict
 import uuid
@@ -36,8 +36,26 @@ from app.models import (
     TimeSlot,
     Classroom,
     TimetableGeneration,
+    TimetableEntry,
     ScheduleScope,
     ScheduleStatus,
+)
+
+from app.database import init_db, SessionLocal, engine, SQLITE_DB_PATH, DATABASE_URL
+from app.db_models import (
+    DepartmentDB,
+    SectionDB,
+    AcademicYearDB,
+    YearDB,
+    SemesterDB,
+    UserDB,
+    SubjectDB,
+    ClassroomDB,
+    TimeSlotDB,
+    FacultyAllocationDB,
+    TimetableGenerationDB,
+    TimetableEntryDB,
+    SystemConfigDB,
 )
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -74,11 +92,16 @@ class DataStore:
         self.active_sessions: Dict[str, User] = {}          # Bearer token -> User (RBAC)
         self.is_custom_data: bool = False
 
+        init_db()
         self._init_time_slots()
-        has_custom = self._load_from_disk()
-        if not has_custom:
-            self._seed_initial_data()
-            self._load_from_disk()
+
+        # Prioritize loading from SQLite relational database tables
+        has_sqlite = self._load_from_sqlite()
+        if not has_sqlite:
+            has_custom = self._load_from_disk()
+            if not has_custom:
+                self._seed_initial_data()
+            self._sync_to_sqlite()
 
     def _init_time_slots(self):
         """Standard daily instructional schedule: 09:20 - 16:10 with Lunch 12:20 - 13:10."""
@@ -450,7 +473,11 @@ class DataStore:
         return new_user
 
     def _save_to_disk(self):
-        """Persists mutable entities or complete custom state to disk (DEF-003)."""
+        """Persists mutable entities or complete custom state to SQLite and JSON backup (DEF-003)."""
+        # 1. Synchronize to SQLite / SQLAlchemy relational database
+        self._sync_to_sqlite()
+
+        # 2. Synchronize to JSON file backup
         try:
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             if self.is_custom_data:
@@ -484,6 +511,416 @@ class DataStore:
                 json.dump(payload, f, indent=2, default=str)
         except Exception as ex:
             print(f"Error persisting data to disk: {ex}")
+
+    def _sync_to_sqlite(self):
+        """Synchronizes in-memory entities into relational database tables (SQLite / PostgreSQL)."""
+        try:
+            session = SessionLocal()
+            try:
+                # 1. Clear existing rows in reverse dependency order
+                session.query(TimetableEntryDB).delete()
+                session.query(TimetableGenerationDB).delete()
+                session.query(FacultyAllocationDB).delete()
+                session.query(SubjectDB).delete()
+                session.query(ClassroomDB).delete()
+                session.query(UserDB).delete()
+                session.query(TimeSlotDB).delete()
+                session.query(SemesterDB).delete()
+                session.query(YearDB).delete()
+                session.query(AcademicYearDB).delete()
+                session.query(SectionDB).delete()
+                session.query(DepartmentDB).delete()
+                session.query(SystemConfigDB).delete()
+
+                # 2. Departments
+                for d in self.departments.values():
+                    session.add(DepartmentDB(id=d.id, code=d.code, name=d.name))
+
+                # 3. Sections
+                for s in self.sections.values():
+                    session.add(SectionDB(id=s.id, name=s.name))
+
+                # 4. Academic Years
+                for ay in self.academic_years.values():
+                    session.add(AcademicYearDB(
+                        id=ay.id,
+                        name=ay.name,
+                        start_date=ay.start_date,
+                        end_date=ay.end_date,
+                        is_current=ay.is_current,
+                    ))
+
+                # 5. Years
+                for y in self.years.values():
+                    session.add(YearDB(id=y.id, name=y.name, academic_level=y.academic_level))
+
+                # 6. Semesters
+                for sm in self.semesters.values():
+                    session.add(SemesterDB(
+                        id=sm.id,
+                        year_id=sm.year_id,
+                        name=sm.name,
+                        term_number=sm.term_number,
+                    ))
+
+                # 7. TimeSlots
+                for ts in self.time_slots.values():
+                    session.add(TimeSlotDB(
+                        id=ts.id,
+                        day_of_week=ts.day_of_week,
+                        day_name=ts.day_name,
+                        slot_index=ts.slot_index,
+                        start_time=ts.start_time,
+                        end_time=ts.end_time,
+                        is_break=ts.is_break,
+                    ))
+
+                # 8. Users
+                for u in self.users.values():
+                    role_str = u.role.value if isinstance(u.role, UserRole) else str(u.role)
+                    session.add(UserDB(
+                        id=u.id,
+                        email=u.email,
+                        password=u.password,
+                        full_name=u.full_name,
+                        role=role_str,
+                        department=u.department,
+                        department_code=u.department_code,
+                    ))
+
+                # 9. Classrooms
+                for c in self.classrooms.values():
+                    session.add(ClassroomDB(
+                        id=c.id,
+                        room_number=c.room_number,
+                        building=c.building,
+                        capacity=c.capacity,
+                    ))
+
+                # 10. Subjects
+                for s in self.subjects.values():
+                    session.add(SubjectDB(
+                        id=s.id,
+                        code=s.code,
+                        name=s.name,
+                        department_id=s.department_id,
+                        department_code=s.department_code,
+                        semester_id=s.semester_id,
+                        weekly_hours=s.weekly_hours,
+                        is_lab=s.is_lab,
+                    ))
+
+                # 11. Faculty Allocations
+                for a in self.allocations.values():
+                    if a.faculty_id in self.users and a.subject_id in self.subjects:
+                        session.add(FacultyAllocationDB(
+                            id=a.id,
+                            faculty_id=a.faculty_id,
+                            subject_id=a.subject_id,
+                            department_id=a.department_id,
+                            department_code=a.department_code,
+                            year_id=a.year_id,
+                            semester_id=a.semester_id,
+                            section_id=a.section_id,
+                            section_name=a.section_name,
+                            academic_year_id=a.academic_year_id,
+                            allocated_by=a.allocated_by,
+                            created_at=a.created_at,
+                        ))
+
+                # 12. Timetable Generations & Entries
+                for g in self.generations.values():
+                    scope_str = g.scope.value if isinstance(g.scope, ScheduleScope) else str(g.scope)
+                    status_str = g.status.value if isinstance(g.status, ScheduleStatus) else str(g.status)
+                    session.add(TimetableGenerationDB(
+                        id=g.id,
+                        title=g.title,
+                        scope=scope_str,
+                        status=status_str,
+                        academic_year_id=g.academic_year_id,
+                        target_date=g.target_date,
+                        created_by=g.created_by,
+                        created_at=g.created_at,
+                        published_at=g.published_at,
+                    ))
+                    for e in g.entries:
+                        session.add(TimetableEntryDB(
+                            id=e.id,
+                            generation_id=g.id,
+                            calendar_date=e.calendar_date,
+                            day_of_week=e.day_of_week,
+                            day_name=e.day_name,
+                            time_slot_id=e.time_slot_id,
+                            slot_index=e.slot_index,
+                            start_time=e.start_time,
+                            end_time=e.end_time,
+                            department_id=e.department_id,
+                            department_code=e.department_code,
+                            section_id=e.section_id,
+                            section_name=e.section_name,
+                            subject_id=e.subject_id,
+                            subject_code=e.subject_code,
+                            subject_name=e.subject_name,
+                            faculty_id=e.faculty_id,
+                            faculty_name=e.faculty_name,
+                            semester_id=e.semester_id,
+                            semester_name=e.semester_name,
+                            year_id=e.year_id,
+                            year_name=e.year_name,
+                            classroom_id=e.classroom_id,
+                            classroom_name=e.classroom_name,
+                            is_lab=e.is_lab,
+                            is_leisure=e.is_leisure,
+                        ))
+
+                # 13. System Config
+                session.add(SystemConfigDB(
+                    key="is_custom_data",
+                    value="true" if self.is_custom_data else "false"
+                ))
+
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                print(f"[SQLAlchemy] Error during SQLite sync: {e}")
+            finally:
+                session.close()
+        except Exception as ex:
+            print(f"[SQLAlchemy] Database connection error during sync: {ex}")
+
+    def _load_from_sqlite(self) -> bool:
+        """Loads relational entities from SQLite / SQLAlchemy backend into in-memory store."""
+        try:
+            session = SessionLocal()
+            try:
+                dept_count = session.query(DepartmentDB).count()
+                user_count = session.query(UserDB).count()
+                if dept_count == 0 or user_count == 0:
+                    return False
+
+                # 1. Departments
+                self.departments = {
+                    d.id: Department(id=d.id, code=d.code, name=d.name)
+                    for d in session.query(DepartmentDB).all()
+                }
+
+                # 2. Sections
+                self.sections = {
+                    s.id: Section(id=s.id, name=s.name)
+                    for s in session.query(SectionDB).all()
+                }
+
+                # 3. Academic Years
+                self.academic_years = {}
+                for ay in session.query(AcademicYearDB).all():
+                    s_date = date.fromisoformat(ay.start_date) if isinstance(ay.start_date, str) else ay.start_date
+                    e_date = date.fromisoformat(ay.end_date) if isinstance(ay.end_date, str) else ay.end_date
+                    self.academic_years[ay.id] = AcademicYear(
+                        id=ay.id,
+                        name=ay.name,
+                        start_date=s_date,
+                        end_date=e_date,
+                        is_current=bool(ay.is_current),
+                    )
+
+                # 4. Years
+                self.years = {
+                    y.id: Year(id=y.id, name=y.name, academic_level=y.academic_level)
+                    for y in session.query(YearDB).all()
+                }
+
+                # 5. Semesters
+                self.semesters = {
+                    sm.id: Semester(
+                        id=sm.id,
+                        year_id=sm.year_id,
+                        name=sm.name,
+                        term_number=sm.term_number,
+                    )
+                    for sm in session.query(SemesterDB).all()
+                }
+
+                # 6. TimeSlots
+                ts_rows = session.query(TimeSlotDB).all()
+                if ts_rows:
+                    self.time_slots = {
+                        ts.id: TimeSlot(
+                            id=ts.id,
+                            day_of_week=ts.day_of_week,
+                            day_name=ts.day_name,
+                            slot_index=ts.slot_index,
+                            start_time=ts.start_time,
+                            end_time=ts.end_time,
+                            is_break=bool(ts.is_break),
+                        )
+                        for ts in ts_rows
+                    }
+
+                # 7. Users
+                users_loaded = {}
+                for u in session.query(UserDB).all():
+                    role_enum = UserRole.ADMIN if str(u.role).upper() == "ADMIN" else UserRole.FACULTY
+                    users_loaded[u.id] = User(
+                        id=u.id,
+                        email=u.email,
+                        password=u.password,
+                        full_name=u.full_name,
+                        role=role_enum,
+                        department=u.department,
+                        department_code=u.department_code or "CSE",
+                    )
+                self.users = users_loaded
+
+                # 8. Classrooms
+                self.classrooms = {
+                    c.id: Classroom(
+                        id=c.id,
+                        room_number=c.room_number,
+                        building=c.building,
+                        capacity=c.capacity,
+                    )
+                    for c in session.query(ClassroomDB).all()
+                }
+
+                # 9. Subjects
+                self.subjects = {
+                    s.id: Subject(
+                        id=s.id,
+                        code=s.code,
+                        name=s.name,
+                        department_id=s.department_id,
+                        department_code=s.department_code,
+                        semester_id=s.semester_id,
+                        weekly_hours=s.weekly_hours,
+                        is_lab=bool(s.is_lab),
+                    )
+                    for s in session.query(SubjectDB).all()
+                }
+
+                # 10. Allocations
+                allocs = {}
+                fac_map = {}
+                for a in session.query(FacultyAllocationDB).all():
+                    c_at = a.created_at
+                    if isinstance(c_at, str):
+                        try:
+                            c_at = datetime.fromisoformat(c_at)
+                        except Exception:
+                            c_at = datetime.now(timezone.utc)
+                    alloc_obj = FacultyAllocation(
+                        id=a.id,
+                        faculty_id=a.faculty_id,
+                        subject_id=a.subject_id,
+                        department_id=a.department_id,
+                        department_code=a.department_code,
+                        year_id=a.year_id,
+                        semester_id=a.semester_id,
+                        section_id=a.section_id,
+                        section_name=a.section_name,
+                        academic_year_id=a.academic_year_id or 1,
+                        allocated_by=a.allocated_by or "ADMIN",
+                        created_at=c_at or datetime.now(timezone.utc),
+                    )
+                    allocs[a.id] = alloc_obj
+                    fac_map[a.faculty_id] = a.id
+                self.allocations = allocs
+                self.faculty_allocation_map = fac_map
+
+                # 11. Generations & Entries
+                gens = {}
+                for g in session.query(TimetableGenerationDB).all():
+                    entries_rows = session.query(TimetableEntryDB).filter_by(generation_id=g.id).all()
+                    entries = [
+                        TimetableEntry(
+                            id=e.id,
+                            generation_id=e.generation_id,
+                            calendar_date=e.calendar_date,
+                            day_of_week=e.day_of_week,
+                            day_name=e.day_name,
+                            time_slot_id=e.time_slot_id,
+                            slot_index=e.slot_index,
+                            start_time=e.start_time,
+                            end_time=e.end_time,
+                            department_id=e.department_id,
+                            department_code=e.department_code,
+                            section_id=e.section_id,
+                            section_name=e.section_name,
+                            subject_id=e.subject_id,
+                            subject_code=e.subject_code,
+                            subject_name=e.subject_name,
+                            faculty_id=e.faculty_id,
+                            faculty_name=e.faculty_name,
+                            semester_id=e.semester_id,
+                            semester_name=e.semester_name,
+                            year_id=e.year_id,
+                            year_name=e.year_name,
+                            classroom_id=e.classroom_id,
+                            classroom_name=e.classroom_name,
+                            is_lab=bool(e.is_lab),
+                            is_leisure=bool(e.is_leisure),
+                        )
+                        for e in entries_rows
+                    ]
+                    c_at = g.created_at
+                    if isinstance(c_at, str):
+                        try:
+                            c_at = datetime.fromisoformat(c_at)
+                        except Exception:
+                            c_at = datetime.now(timezone.utc)
+                    p_at = g.published_at
+                    if isinstance(p_at, str):
+                        try:
+                            p_at = datetime.fromisoformat(p_at)
+                        except Exception:
+                            p_at = None
+
+                    scope_val = ScheduleScope.WEEK
+                    try:
+                        scope_val = ScheduleScope(g.scope)
+                    except Exception:
+                        pass
+
+                    status_val = ScheduleStatus.DRAFT
+                    try:
+                        status_val = ScheduleStatus(g.status)
+                    except Exception:
+                        pass
+
+                    gens[g.id] = TimetableGeneration(
+                        id=g.id,
+                        title=g.title,
+                        scope=scope_val,
+                        status=status_val,
+                        academic_year_id=g.academic_year_id or 1,
+                        target_date=g.target_date,
+                        created_by=g.created_by,
+                        created_at=c_at or datetime.now(timezone.utc),
+                        published_at=p_at,
+                        entries=entries,
+                    )
+                self.generations = gens
+
+                # 12. Config
+                cfg = session.query(SystemConfigDB).filter_by(key="is_custom_data").first()
+                if cfg:
+                    self.is_custom_data = (cfg.value == "true")
+                else:
+                    self.is_custom_data = False
+
+                return True
+            except Exception as e:
+                print(f"[SQLAlchemy] Error loading from SQLite: {e}")
+                return False
+            finally:
+                session.close()
+        except Exception as ex:
+            print(f"[SQLAlchemy] Connection error loading from SQLite: {ex}")
+            return False
+
+    def save_generation(self, generation: TimetableGeneration):
+        """Saves a timetable generation and syncs to SQLite and disk."""
+        self.generations[generation.id] = generation
+        self._save_to_disk()
 
     def _load_from_disk(self) -> bool:
         """Restores persisted state from disk if available (DEF-003). Returns True if custom data was loaded."""
@@ -787,6 +1224,9 @@ class DataStore:
 
     def get_database_stats(self) -> Dict[str, Any]:
         total_faculty = len([u for u in self.users.values() if u.role == UserRole.FACULTY])
+        is_pg = "postgresql" in DATABASE_URL.lower()
+        engine_name = "PostgreSQL (SQLAlchemy Relational)" if is_pg else "SQLite (SQLAlchemy Relational)"
+        target = DATABASE_URL.split("@")[-1] if is_pg else str(SQLITE_DB_PATH)
         return {
             "total_departments": len(self.departments),
             "total_sections": len(self.sections),
@@ -798,6 +1238,8 @@ class DataStore:
             "is_demo_mode": not self.is_custom_data,
             "status": "CUSTOM_INSTITUTIONAL_DATA" if self.is_custom_data else "DEMO_MOCK_DATA",
             "message": "Custom Institutional Data is active." if self.is_custom_data else "Demo / Mock Data is active.",
+            "database_engine": engine_name,
+            "database_target": target,
         }
 
     def add_department(self, code: str, name: str) -> Department:

@@ -391,17 +391,21 @@
       <!-- Center: Segmented Navigation Pills -->
       <nav
         class="flex items-center p-1 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] self-start xl:self-center text-xs font-semibold shadow-inner">
-        <button id="nav-btn-auth" onclick="switchMainView('AUTH')"
+        <button id="nav-btn-auth" onclick="handleNavClick('AUTH')"
           class="px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5">
           <span>🔐 Sign In / Register</span>
         </button>
-        <button id="nav-btn-admin" onclick="switchMainView('ADMIN')"
-          class="px-3.5 py-2 rounded-lg font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 flex items-center gap-1.5">
-          <span>🛡️ Admin Portal</span>
+        <button id="nav-btn-admin" onclick="handleNavClick('ADMIN')"
+          class="px-3.5 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-300 transition-all duration-200 flex items-center gap-1.5 opacity-70"
+          title="Sign in as Administrator required">
+          <span id="nav-btn-admin-icon">🔒</span>
+          <span>Admin Portal</span>
         </button>
-        <button id="nav-btn-faculty" onclick="switchMainView('FACULTY')"
-          class="px-3.5 py-2 rounded-lg font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 flex items-center gap-1.5">
-          <span>👨‍🏫 Faculty Portal</span>
+        <button id="nav-btn-faculty" onclick="handleNavClick('FACULTY')"
+          class="px-3.5 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-300 transition-all duration-200 flex items-center gap-1.5 opacity-70"
+          title="Sign in as Faculty member required">
+          <span id="nav-btn-faculty-icon">🔒</span>
+          <span>Faculty Portal</span>
         </button>
       </nav>
 
@@ -744,7 +748,98 @@
     <!-- ==================================================================== -->
     <!-- 2. ADMINISTRATOR MASTER CONTROL CENTER                                -->
     <!-- ==================================================================== -->
-    <main id="admin-section" class="space-y-6">
+    <main id="admin-section" class="hidden space-y-6">
+
+      <!-- Administrator Authorization Gate Wall -->
+      <div id="admin-auth-wall" class="hidden glass-panel rounded-3xl p-8 border border-red-500/30 text-center space-y-4">
+        <div class="h-16 w-16 mx-auto rounded-2xl bg-red-500/10 text-red-400 text-3xl flex items-center justify-center border border-red-500/20">
+          🔒
+        </div>
+        <h3 class="text-xl font-bold text-[var(--text-main)]">Administrator Authorization Required</h3>
+        <p class="text-xs sm:text-sm text-[var(--text-muted)] max-w-md mx-auto">
+          You must sign in with verified administrator credentials to access faculty allocations, schedule generation, and institutional databases.
+        </p>
+        <button onclick="switchMainView('AUTH')" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition">
+          Sign In to Administrator Account
+        </button>
+      </div>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- 2.0 INSTITUTIONAL DATABASE & REAL DATA MANAGEMENT STRIP             -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="glass-panel rounded-3xl p-5 sm:p-6 border border-[var(--border-subtle)] space-y-4">
+        <div
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-3 border-b border-[var(--border-subtle)]">
+          <div class="flex items-center gap-3">
+            <div
+              class="h-11 w-11 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white text-xl shadow-lg shrink-0">
+              🏢
+            </div>
+            <div>
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <h2 class="text-base sm:text-lg font-extrabold text-[var(--text-main)]">
+                  Institutional Database & Real Data Management
+                </h2>
+                <span id="db-mode-badge"
+                  class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                  <span id="db-mode-dot" class="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
+                  <span id="db-mode-text">Demo / Mock Data Active</span>
+                </span>
+              </div>
+              <p class="text-xs text-[var(--text-muted)] mt-0.5" id="db-summary-text">
+                Purge mock datasets (Turing, Hopper, Tesla, CS101) and load your real university faculty, curriculum,
+                and lecture halls.
+              </p>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <button onclick="downloadRealDataTemplate()"
+              class="px-3.5 py-2 rounded-xl text-xs font-bold bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] text-[var(--text-main)] border border-[var(--border-subtle)] transition flex items-center gap-1.5 shadow-sm">
+              <span>📥 Download Template (JSON)</span>
+            </button>
+            <button onclick="openDataImportModal()"
+              class="px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-600/20 transition flex items-center gap-1.5">
+              <span>🚀 Import Real Data</span>
+            </button>
+            <button onclick="promptClearMockData()"
+              class="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition flex items-center gap-1.5">
+              <span>🗑️ Clear Mock Data</span>
+            </button>
+            <button onclick="promptResetDemoData()"
+              class="px-3 py-2 rounded-xl text-xs font-bold bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 transition flex items-center gap-1.5"
+              title="Restore sample demo dataset">
+              <span>🔄 Restore Demo</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Live Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+          <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-center">
+            <span class="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Departments</span>
+            <span class="text-sm font-extrabold text-[var(--text-main)]" id="db-stat-depts">4</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-center">
+            <span class="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Faculty Members</span>
+            <span class="text-sm font-extrabold text-[var(--text-main)]" id="db-stat-faculty">24</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-center">
+            <span class="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Curriculum Subjects</span>
+            <span class="text-sm font-extrabold text-[var(--text-main)]" id="db-stat-subjects">26</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-center">
+            <span class="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Classrooms & Labs</span>
+            <span class="text-sm font-extrabold text-[var(--text-main)]" id="db-stat-rooms">24</span>
+          </div>
+          <div
+            class="p-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-center col-span-2 sm:col-span-1">
+            <span class="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Active Allocations</span>
+            <span class="text-sm font-extrabold text-[var(--text-main)]" id="db-stat-allocs">9</span>
+          </div>
+        </div>
+      </div>
 
       <!-- ------------------------------------------------------------------ -->
       <!-- 2.A CHRONOBOT: SITUATIONAL AI TIMETABLE COPILOT                     -->
@@ -1163,6 +1258,20 @@
     <!-- ==================================================================== -->
     <main id="faculty-section" class="hidden space-y-6">
 
+      <!-- Faculty Authorization Gate Wall -->
+      <div id="faculty-auth-wall" class="hidden glass-panel rounded-3xl p-8 border border-amber-500/30 text-center space-y-4">
+        <div class="h-16 w-16 mx-auto rounded-2xl bg-amber-500/10 text-amber-400 text-3xl flex items-center justify-center border border-amber-500/20">
+          🔒
+        </div>
+        <h3 class="text-xl font-bold text-[var(--text-main)]">Faculty Sign-In Required</h3>
+        <p class="text-xs sm:text-sm text-[var(--text-muted)] max-w-md mx-auto">
+          Please sign in to view your personalized teaching schedule, classroom assignments, and subject allocation.
+        </p>
+        <button onclick="switchMainView('AUTH')" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition">
+          Sign In to Faculty Account
+        </button>
+      </div>
+
       <!-- Faculty Header Card -->
       <div
         class="glass-panel rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -1325,20 +1434,100 @@
   </div>
 
   <!-- ==================================================================== -->
+  <!-- MODAL: INSTITUTIONAL REAL DATA IMPORT                                -->
+  <!-- ==================================================================== -->
+  <div id="modal-data-import"
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden">
+    <div
+      class="glass-panel w-full max-w-2xl rounded-3xl p-6 sm:p-7 shadow-2xl border border-[var(--border-subtle)] space-y-5 max-h-[90vh] flex flex-col bg-[var(--bg-card-solid)]">
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)] shrink-0">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">🏢</span>
+          <div>
+            <h3 class="text-lg font-bold text-[var(--text-main)]">Import Real Institutional Data</h3>
+            <p class="text-xs text-[var(--text-muted)]">Upload or paste your college's official departments, faculty,
+              subjects, and rooms.</p>
+          </div>
+        </div>
+        <button onclick="closeDataImportModal()"
+          class="h-8 w-8 rounded-full bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-main)] flex items-center justify-center text-sm font-bold border border-[var(--border-subtle)]">
+          ✕
+        </button>
+      </div>
+
+      <!-- File Upload & JSON Area (Scrollable) -->
+      <div class="space-y-4 overflow-y-auto pr-1">
+
+        <!-- Step 1: File Pick or Template -->
+        <div class="p-4 rounded-2xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Option A: Upload JSON
+              File</label>
+            <button onclick="downloadRealDataTemplate()"
+              class="text-xs text-indigo-400 hover:text-indigo-300 underline font-semibold">
+              Get Empty Template (.json)
+            </button>
+          </div>
+          <input type="file" id="import-json-file" accept=".json" onchange="handleImportFileSelect(event)"
+            class="block w-full text-xs text-[var(--text-muted)] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer">
+        </div>
+
+        <!-- Step 2: Paste JSON Directly -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)]">Option B: Paste JSON
+              Payload</label>
+            <button onclick="loadSampleRealDataIntoTextarea()"
+              class="text-xs text-emerald-400 hover:text-emerald-300 underline font-semibold">
+              Fill Real College Sample (Apex University)
+            </button>
+          </div>
+          <textarea id="import-json-textarea" rows="10" placeholder="Paste your institutional JSON here..."
+            class="glass-input w-full font-mono text-xs rounded-2xl p-3.5 outline-none text-[var(--text-main)] leading-relaxed"></textarea>
+        </div>
+
+        <!-- Options -->
+        <div class="flex items-center gap-2 pt-1">
+          <input type="checkbox" id="import-clear-mock-checkbox" checked
+            class="rounded border-slate-700 text-indigo-600 focus:ring-0">
+          <label for="import-clear-mock-checkbox" class="text-xs text-[var(--text-main)] font-semibold cursor-pointer">
+            Wipe out mock/demo data before importing real data (Recommended)
+          </label>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="pt-3 border-t border-[var(--border-subtle)] flex items-center justify-end gap-2.5 shrink-0">
+        <button onclick="closeDataImportModal()"
+          class="px-4 py-2.5 rounded-xl text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+          Cancel
+        </button>
+        <button onclick="submitInstitutionalDataImport()"
+          class="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-lg shadow-emerald-600/30 flex items-center gap-2">
+          <span>Validate & Save to Database 🚀</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================================================================== -->
   <!-- CLIENT-SIDE ARCHITECTURE, CONSTRAINT ENGINE & REST API INTEGRATION    -->
   <!-- ==================================================================== -->
   <script>
     // ------------------------------------------------------------------------
     // LOOKUPS & DATA RELATIONS
     // ------------------------------------------------------------------------
-    const departments = [
+    let departments = [
       { id: 1, code: "CSE", name: "Computer Science & Engineering" },
       { id: 2, code: "ECE", name: "Electronics & Communication Engineering" },
       { id: 3, code: "EEE", name: "Electrical & Electronics Engineering" },
       { id: 4, code: "MECH", name: "Mechanical Engineering" },
     ];
 
-    const sections = [
+    let sections = [
       { id: 1, name: "A" },
       { id: 2, name: "B" },
       { id: 3, name: "C" },
@@ -1347,7 +1536,7 @@
       { id: 6, name: "F" },
     ];
 
-    const years = [
+    let years = [
       { id: 1, name: "Year 1 (Freshman)" },
       { id: 2, name: "Year 2 (Sophomore)" },
       { id: 3, name: "Year 3 (Junior)" },
@@ -1355,7 +1544,7 @@
     ];
 
     // Exactly 2 semesters per academic year
-    const semesters = [
+    let semesters = [
       { id: 1, year_id: 1, name: "Semester 1" },
       { id: 2, year_id: 1, name: "Semester 2" },
       { id: 3, year_id: 2, name: "Semester 3" },
@@ -1366,7 +1555,7 @@
       { id: 8, year_id: 4, name: "Semester 8" },
     ];
 
-    const facultyUsers = [
+    let facultyUsers = [
       // CSE
       { id: "fac-cse-01", email: "grace.hopper@univ.edu", name: "Dr. Grace Hopper", deptId: 1, deptCode: "CSE", role: "FACULTY" },
       { id: "fac-cse-02", email: "donald.knuth@univ.edu", name: "Prof. Donald Knuth", deptId: 1, deptCode: "CSE", role: "FACULTY" },
@@ -1400,7 +1589,7 @@
       role: "ADMIN"
     };
 
-    const subjects = [
+    let subjects = [
       // CSE
       { id: "sub-cs-101", code: "CS101", name: "Intro to Computing", deptId: 1, semId: 1, is_lab: false },
       { id: "sub-cs-101L", code: "CS101L", name: "Computing Lab", deptId: 1, semId: 1, is_lab: true },
@@ -1433,7 +1622,7 @@
       { id: "sub-me-401", code: "ME401", name: "Robotics & Industrial Auto", deptId: 4, semId: 7, is_lab: false },
     ];
 
-    const classrooms = [
+    let classrooms = [
       { id: 1, name: "LH-101 (Block A)" },
       { id: 2, name: "LH-102 (Block A)" },
       { id: 3, name: "LH-103 (Block A)" },
@@ -1529,7 +1718,14 @@
     let authToken = null;
     try {
       authToken = localStorage.getItem("chrono_token");
-    } catch (e) { }
+      const savedUserStr = localStorage.getItem("chrono_user");
+      if (authToken && savedUserStr) {
+        currentUser = JSON.parse(savedUserStr);
+      }
+    } catch (e) {
+      authToken = null;
+      currentUser = null;
+    }
 
     // ------------------------------------------------------------------------
     // CONSTRAINT ENGINE & SOLVER SIMULATION (DEF-001)
@@ -1858,16 +2054,48 @@
       // 4. Initial Constraint Solver Run
       currentGeneration.entries = runConstraintSolver("WEEK");
 
-      // 5. Update Auth UI & Initial Render
+      // 5. Update Auth UI & Initial Render based on user role
       updateAuthUI();
-      renderAllocationsTable();
-      renderAdminSchedule();
+      if (currentUser && currentUser.role === "ADMIN") {
+        renderAllocationsTable();
+        renderAdminSchedule();
+      } else if (currentUser && currentUser.role === "FACULTY") {
+        onFacultyYearChanged();
+        renderFacultySchedule();
+      }
     }
 
     // ------------------------------------------------------------------------
-    // NAVIGATION CONTROLLER
+    // NAVIGATION CONTROLLER & PORTAL ROUTE GUARDS
     // ------------------------------------------------------------------------
+    function handleNavClick(view) {
+      if (!currentUser && (view === "ADMIN" || view === "FACULTY")) {
+        showStatus(`🔒 Authentication Required: You must sign in or register before entering the ${view === "ADMIN" ? "Admin" : "Faculty"} Portal.`, "warning");
+        switchMainView("AUTH");
+        const authCard = document.getElementById("auth-section");
+        if (authCard) {
+          authCard.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        return;
+      }
+      if (currentUser && view === "ADMIN" && currentUser.role !== "ADMIN") {
+        showStatus("⛔ Access Denied: Administrator authority required. You are signed in as Faculty.", "error");
+        switchMainView("FACULTY");
+        return;
+      }
+      switchMainView(view);
+    }
+
     function switchMainView(view) {
+      // STRICT SECURITY GATE: Never allow unauthenticated users into ADMIN or FACULTY views
+      if (!currentUser && (view === "ADMIN" || view === "FACULTY")) {
+        showStatus(`🔒 Access Denied: Please sign in or register to enter the ${view === "ADMIN" ? "Administrator" : "Faculty"} Portal.`, "warning");
+        view = "AUTH";
+      } else if (currentUser && view === "ADMIN" && currentUser.role !== "ADMIN") {
+        showStatus("⛔ Access Denied: Administrator authority required. You are signed in as Faculty.", "error");
+        view = "FACULTY";
+      }
+
       currentMainView = view;
       const authSection = document.getElementById("auth-section");
       const adminSection = document.getElementById("admin-section");
@@ -1885,19 +2113,38 @@
         if (btn) btn.className = "px-3.5 py-2 rounded-lg font-bold text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all duration-200 flex items-center gap-1.5";
       });
 
+      const adminWall = document.getElementById("admin-auth-wall");
+      const facultyWall = document.getElementById("faculty-auth-wall");
+
+      if (adminWall) {
+        if (!currentUser || currentUser.role !== "ADMIN") {
+          adminWall.classList.remove("hidden");
+        } else {
+          adminWall.classList.add("hidden");
+        }
+      }
+
+      if (facultyWall) {
+        if (!currentUser) {
+          facultyWall.classList.remove("hidden");
+        } else {
+          facultyWall.classList.add("hidden");
+        }
+      }
+
       if (view === "AUTH") {
         if (authSection) authSection.classList.remove("hidden");
         if (navAuth) navAuth.className = "px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
         window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else if (view === "ADMIN") {
+      } else if (view === "ADMIN" && currentUser && currentUser.role === "ADMIN") {
         if (adminSection) adminSection.classList.remove("hidden");
         if (navAdmin) navAdmin.className = "px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
         renderAllocationsTable();
         renderAdminSchedule();
-      } else if (view === "FACULTY") {
+      } else if (view === "FACULTY" && currentUser) {
         if (facultySection) facultySection.classList.remove("hidden");
         if (navFaculty) navFaculty.className = "px-3.5 py-2 rounded-lg font-bold bg-emerald-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
-        if (currentUser && currentUser.role === "FACULTY") {
+        if (currentUser.role === "FACULTY") {
           onFacultyYearChanged();
           renderFacultySchedule();
         }
@@ -1953,12 +2200,12 @@
     }
 
     function quickLogin(email, password, role) {
-      // Demo shortcuts prefill the account only; credentials are never embedded in the page.
       document.getElementById("login-email").value = email;
-      document.getElementById("login-password").value = "";
+      const defaultPwd = password || (role === "ADMIN" ? "admin123" : "faculty123");
+      document.getElementById("login-password").value = defaultPwd;
       setLoginRoleTab(role);
       document.getElementById("login-password").focus();
-      showStatus("Enter the password configured for this account on your institution's backend.", "info");
+      showStatus(`Prefilled demo credentials for ${email}. Click 'Sign In' or press Enter.`, "info");
     }
 
     function handleManualLogin(e) {
@@ -1988,22 +2235,27 @@
           showStatus(data.detail || data.message || (resp.status === 401 ? "Invalid email or password." : `Sign-in failed (${resp.status}).`), "error");
           return;
         }
-        if (!data.access_token || !data.user || !data.user.id || !data.user.role) {
+        const token = data.access_token || data.token;
+        if (!token || !data.user || !data.user.id || !data.user.role) {
           showStatus("The server returned an incomplete login response. Please contact the administrator.", "error");
           return;
         }
-        authToken = data.access_token;
+        authToken = token;
         try { localStorage.setItem("chrono_token", authToken); } catch (e) { }
         const deptId = Number(data.user.department_id || 1);
-        const dept = departments.find(d => Number(d.id) === deptId);
+        const dept = departments.find(d => Number(d.id) === deptId || d.code === data.user.department_code);
         currentUser = {
           id: data.user.id,
           email: data.user.email || cleanEmail,
-          name: data.user.name || cleanEmail,
-          deptId,
-          deptCode: dept ? dept.code : (data.user.role === "ADMIN" ? "ALL" : "CSE"),
+          name: data.user.name || data.user.full_name || cleanEmail,
+          deptId: dept ? dept.id : deptId,
+          deptCode: dept ? dept.code : (data.user.department_code || (data.user.role === "ADMIN" ? "ALL" : "CSE")),
           role: String(data.user.role).toUpperCase()
         };
+        try {
+          localStorage.setItem("chrono_token", authToken);
+          localStorage.setItem("chrono_user", JSON.stringify(currentUser));
+        } catch (e) { }
         updateAuthUI();
         showStatus(`Welcome, ${currentUser.name}! Signed in securely as ${currentUser.role}.`, "success");
       } catch (err) {
@@ -2038,23 +2290,27 @@
           showStatus(data.detail || data.message || `Registration failed (${resp.status}).`, "error");
           return;
         }
-        if (!data.access_token || !data.user || !data.user.id) {
+        const token = data.access_token || data.token;
+        if (!token || !data.user || !data.user.id) {
           showStatus("The server returned an incomplete registration response.", "error");
           return;
         }
-        authToken = data.access_token;
-        try { localStorage.setItem("chrono_token", authToken); } catch (e) { }
+        authToken = token;
         const registeredUser = data.user;
         const userDeptId = Number(registeredUser.department_id || deptId || 1);
-        const dept = departments.find(d => Number(d.id) === userDeptId);
+        const dept = departments.find(d => Number(d.id) === userDeptId || d.code === registeredUser.department_code);
         currentUser = {
           id: registeredUser.id,
           email: registeredUser.email || email,
           name: registeredUser.name || registeredUser.full_name || name,
-          deptId: userDeptId,
-          deptCode: dept ? dept.code : (registeredUser.role === "ADMIN" ? "ALL" : "CSE"),
+          deptId: dept ? dept.id : userDeptId,
+          deptCode: dept ? dept.code : (registeredUser.department_code || (registeredUser.role === "ADMIN" ? "ALL" : "CSE")),
           role: String(registeredUser.role || role).toUpperCase()
         };
+        try {
+          localStorage.setItem("chrono_token", authToken);
+          localStorage.setItem("chrono_user", JSON.stringify(currentUser));
+        } catch (e) { }
         updateAuthUI();
         showStatus(`Account created successfully for ${currentUser.name}.`, "success");
       } catch (err) {
@@ -2066,9 +2322,12 @@
     function logout() {
       currentUser = null;
       authToken = null;
-      try { localStorage.removeItem("chrono_token"); } catch (e) { }
+      try {
+        localStorage.removeItem("chrono_token");
+        localStorage.removeItem("chrono_user");
+      } catch (e) { }
       updateAuthUI();
-      showStatus("You have been signed out. Welcome back to the Login Page.", "info");
+      showStatus("You have been signed out. Please sign in to enter the Faculty or Admin portal.", "info");
     }
 
     function updateAuthUI() {
@@ -2076,36 +2335,82 @@
       const roleBadge = document.getElementById("current-user-role-badge");
       const authBtn = document.getElementById("auth-action-btn");
       const dot = document.getElementById("user-status-dot");
+      const navAdmin = document.getElementById("nav-btn-admin");
+      const navFaculty = document.getElementById("nav-btn-faculty");
+      const navAuth = document.getElementById("nav-btn-auth");
 
       if (!currentUser) {
-        nameEl.innerText = "Guest";
-        roleBadge.innerText = "Logged Out";
-        roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300";
+        if (nameEl) nameEl.innerText = "Guest";
+        if (roleBadge) {
+          roleBadge.innerText = "Logged Out";
+          roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300";
+        }
         if (dot) dot.className = "h-2 w-2 rounded-full bg-slate-500";
-        authBtn.innerText = "Sign In";
+        if (authBtn) authBtn.innerText = "Sign In";
+
+        // Lock portal buttons for unauthenticated guests
+        if (navAuth) {
+          navAuth.innerHTML = `<span>🔐 Sign In / Register</span>`;
+        }
+        if (navAdmin) {
+          navAdmin.innerHTML = `<span>🔒 Admin Portal</span>`;
+          navAdmin.title = "Authentication Required: Sign in as Admin";
+          navAdmin.className = "px-3.5 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-300 transition-all duration-200 flex items-center gap-1.5 opacity-70";
+        }
+        if (navFaculty) {
+          navFaculty.innerHTML = `<span>🔒 Faculty Portal</span>`;
+          navFaculty.title = "Authentication Required: Sign in as Faculty";
+          navFaculty.className = "px-3.5 py-2 rounded-lg font-bold text-slate-500 hover:text-slate-300 transition-all duration-200 flex items-center gap-1.5 opacity-70";
+        }
+
         switchMainView("AUTH");
         return;
       }
 
-      nameEl.innerText = currentUser.name;
-      roleBadge.innerText = currentUser.role;
+      // Authenticated User
+      if (nameEl) nameEl.innerText = currentUser.name;
+      if (roleBadge) roleBadge.innerText = currentUser.role;
       if (dot) dot.className = "h-2 w-2 rounded-full bg-emerald-400 animate-pulse";
-      authBtn.innerText = "Sign Out";
+      if (authBtn) authBtn.innerText = "Sign Out";
+      if (navAuth) {
+        navAuth.innerHTML = `<span>🔐 Switch Account</span>`;
+      }
 
       if (currentUser.role === "ADMIN") {
-        roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
+        if (roleBadge) roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-indigo-500/20 text-indigo-300 border border-indigo-500/30";
+        if (navAdmin) {
+          navAdmin.innerHTML = `<span>🛡️ Admin Portal</span>`;
+          navAdmin.title = "Administrator Master Control Center";
+        }
+        if (navFaculty) {
+          navFaculty.innerHTML = `<span>👨‍🏫 Faculty Portal</span>`;
+          navFaculty.title = "Faculty Schedule Viewer";
+        }
         switchMainView("ADMIN");
       } else {
-        roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-        document.getElementById("faculty-dash-name").innerText = currentUser.name;
-        document.getElementById("faculty-dash-dept-badge").innerText = currentUser.deptCode;
+        if (roleBadge) roleBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        if (navAdmin) {
+          navAdmin.innerHTML = `<span>🔒 Admin (Restricted)</span>`;
+          navAdmin.title = "Administrator privileges required";
+          navAdmin.className = "px-3.5 py-2 rounded-lg font-bold text-slate-600 transition-all duration-200 flex items-center gap-1.5 opacity-40 cursor-not-allowed";
+        }
+        if (navFaculty) {
+          navFaculty.innerHTML = `<span>👨‍🏫 Faculty Portal</span>`;
+          navFaculty.title = "Personalized Faculty Schedule & Preferences";
+        }
+        const facNameEl = document.getElementById("faculty-dash-name");
+        const facDeptEl = document.getElementById("faculty-dash-dept-badge");
+        if (facNameEl) facNameEl.innerText = currentUser.name;
+        if (facDeptEl) facDeptEl.innerText = currentUser.deptCode;
         const myAlloc = allocations[currentUser.id];
         if (myAlloc) {
           const sub = subjects.find(s => s.id === myAlloc.subject_id);
           const sec = sections.find(s => s.id === myAlloc.sec_id);
           const sem = semesters.find(s => s.id === myAlloc.sem_id);
-          document.getElementById("faculty-dash-subject").innerText = `${sub ? sub.code + ' - ' + sub.name : 'Not allocated'} (${sem ? sem.name : ''})`;
-          document.getElementById("faculty-dash-section").innerText = `Section ${sec ? sec.name : 'A'}`;
+          const subEl = document.getElementById("faculty-dash-subject");
+          const secEl = document.getElementById("faculty-dash-section");
+          if (subEl) subEl.innerText = `${sub ? sub.code + ' - ' + sub.name : 'Not allocated'} (${sem ? sem.name : ''})`;
+          if (secEl) secEl.innerText = `Section ${sec ? sec.name : 'A'}`;
         }
         switchMainView("FACULTY");
       }
@@ -2160,6 +2465,11 @@
     }
 
     async function executeBotGeneration(promptText, scope, targetDate) {
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Please sign in as an Administrator to consult ChronoBot.", "error");
+        switchMainView("AUTH");
+        return;
+      }
       const submitBtn = document.getElementById("bot-submit-btn");
       if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = `<span>Generating… ⚙️</span>`; }
       try {
@@ -2300,6 +2610,11 @@
 
     async function handleAdminAllocationSubmit(e) {
       e.preventDefault();
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Please sign in as an Administrator to allocate subjects.", "error");
+        switchMainView("AUTH");
+        return;
+      }
       const facId = document.getElementById("admin-alloc-fac").value;
       const deptId = parseInt(document.getElementById("admin-alloc-dept").value);
       const semId = parseInt(document.getElementById("admin-alloc-sem").value);
@@ -2360,6 +2675,7 @@
     // TABLE RENDERING & DOM SANITIZATION (DEF-007)
     // ------------------------------------------------------------------------
     function renderAllocationsTable() {
+      if (!currentUser || currentUser.role !== "ADMIN") return;
       const tbody = document.getElementById("allocations-table-body");
       const countEl = document.getElementById("total-allocations-count");
       const entries = Object.keys(allocations);
@@ -2402,6 +2718,7 @@
     // MASTER TIMETABLE SCHEDULE RENDERER (DEF-006, DEF-007, DEF-010)
     // ------------------------------------------------------------------------
     function renderAdminSchedule() {
+      if (!currentUser || currentUser.role !== "ADMIN") return;
       const grid = document.getElementById("admin-timetable-grid");
       const statusPill = document.getElementById("admin-status-pill");
       const pubBtn = document.getElementById("admin-publish-btn");
@@ -2642,6 +2959,11 @@
     // API TRIGGER GENERATION & PUBLISHING (DEF-002)
     // ------------------------------------------------------------------------
     async function triggerGeneration() {
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Please sign in as an Administrator to generate timetables.", "error");
+        switchMainView("AUTH");
+        return;
+      }
       const button = document.querySelector('button[onclick="triggerGeneration()"]');
       const scope = document.getElementById("admin-gen-scope").value;
       const dateInput = document.getElementById("admin-gen-date");
@@ -2685,6 +3007,11 @@
     }
 
     async function publishSchedule() {
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Please sign in as an Administrator to publish timetables.", "error");
+        switchMainView("AUTH");
+        return;
+      }
       if (!authToken || currentGeneration.localPreview) {
         showStatus("Publishing requires an authenticated backend-generated draft. Connect to the server and generate again before publishing.", "error");
         return;
@@ -2809,7 +3136,309 @@
       }
     }
 
-    window.addEventListener("DOMContentLoaded", init);
+    // ------------------------------------------------------------------------
+    // BACKEND METADATA SYNCHRONIZATION
+    // ------------------------------------------------------------------------
+    async function loadMetadata() {
+      try {
+        const resp = await fetch("/api/metadata");
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.departments && data.departments.length) departments = data.departments;
+        if (data.faculty && data.faculty.length) {
+          facultyUsers = data.faculty.map(f => ({
+            id: f.id,
+            email: f.email,
+            name: f.name,
+            deptId: f.department_id || 1,
+            deptCode: f.department_code || "CSE",
+            role: "FACULTY"
+          }));
+        }
+        if (data.subjects && data.subjects.length) {
+          subjects = data.subjects.map(s => ({
+            id: s.id,
+            code: s.code,
+            name: s.name,
+            deptId: s.department_id,
+            deptCode: s.department_code,
+            semId: s.semester_id,
+            is_lab: s.is_lab
+          }));
+        }
+        if (data.classrooms && data.classrooms.length) {
+          classrooms = data.classrooms.map(c => ({
+            id: c.id,
+            name: c.room_number,
+            building: c.building
+          }));
+        }
+        if (data.current_allocations && data.current_allocations.length) {
+          allocations = {};
+          data.current_allocations.forEach(a => {
+            allocations[a.faculty_id] = {
+              subject_id: a.subject_id,
+              dept_id: a.department_id,
+              year_id: a.year_id,
+              sem_id: a.semester_id,
+              sec_id: a.section_id,
+              authority: a.allocated_by
+            };
+          });
+        } else if (data.faculty && data.faculty.length === 0) {
+          allocations = {};
+        }
+
+        // Repopulate UI dropdowns
+        const filterFac = document.getElementById("filter-faculty");
+        if (filterFac) {
+          filterFac.innerHTML = `<option value="">All Faculty (${facultyUsers.length})</option>`;
+          facultyUsers.forEach(f => {
+            filterFac.innerHTML += `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)} (${escapeHtml(f.deptCode)})</option>`;
+          });
+        }
+        onAdminDeptChanged();
+        onAdminSemChanged();
+        onFacultyYearChanged();
+        renderAllocationsTable();
+      } catch (err) {
+        console.warn("Could not load backend metadata:", err);
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // INSTITUTIONAL DATABASE & REAL DATA MANAGEMENT
+    // ------------------------------------------------------------------------
+    async function fetchDatabaseStatus() {
+      try {
+        const resp = await fetch("/api/admin/database/status", {
+          headers: authToken ? { "Authorization": `Bearer ${authToken}` } : {}
+        });
+        if (!resp.ok) return;
+        const stats = await resp.json();
+
+        const badge = document.getElementById("db-mode-badge");
+        const dot = document.getElementById("db-mode-dot");
+        const modeText = document.getElementById("db-mode-text");
+        const summaryText = document.getElementById("db-summary-text");
+
+        if (badge && modeText && dot) {
+          if (stats.is_demo_mode) {
+            badge.className = "text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5";
+            dot.className = "h-1.5 w-1.5 rounded-full bg-amber-400";
+            modeText.innerText = "Demo / Mock Data Active";
+            if (summaryText) summaryText.innerText = "Currently running on simulated sample data (Alan Turing, Grace Hopper, Nikola Tesla, CS101). Click 'Import Real Data' or use the CLI to load your real college data.";
+          } else {
+            badge.className = "text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5";
+            dot.className = "h-1.5 w-1.5 rounded-full bg-emerald-400";
+            modeText.innerText = "Original Institutional Data Active";
+            if (summaryText) summaryText.innerText = "Active and saved with your original institutional curriculum, faculty members, and campus classrooms.";
+          }
+        }
+
+        const elDepts = document.getElementById("db-stat-depts");
+        const elFaculty = document.getElementById("db-stat-faculty");
+        const elSubjects = document.getElementById("db-stat-subjects");
+        const elRooms = document.getElementById("db-stat-rooms");
+        const elAllocs = document.getElementById("db-stat-allocs");
+
+        if (elDepts) elDepts.innerText = stats.total_departments;
+        if (elFaculty) elFaculty.innerText = stats.total_faculty;
+        if (elSubjects) elSubjects.innerText = stats.total_subjects;
+        if (elRooms) elRooms.innerText = stats.total_classrooms;
+        if (elAllocs) elAllocs.innerText = stats.total_allocations;
+      } catch (err) {
+        console.warn("Could not fetch database status:", err);
+      }
+    }
+
+    async function downloadRealDataTemplate() {
+      try {
+        const resp = await fetch("/api/admin/database/template", {
+          headers: authToken ? { "Authorization": `Bearer ${authToken}` } : {}
+        });
+        const template = await resp.json();
+        const jsonStr = JSON.stringify(template, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "institution_data_template.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        showStatus("Downloaded institutional data template (institution_data_template.json). Edit it with your college details and import.", "success");
+      } catch (err) {
+        showStatus("Failed to download template: " + err.message, "error");
+      }
+    }
+
+    async function promptClearMockData() {
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Administrator privileges required.", "error");
+        switchMainView("AUTH");
+        return;
+      }
+      if (!confirm("Are you sure you want to clear all fake/mock data (faculty, subjects, rooms, and draft timetables)? Your Admin login will be preserved, leaving a clean slate for real institutional data.")) {
+        return;
+      }
+      try {
+        const resp = await fetch("/api/admin/database/clear-mock", {
+          method: "POST",
+          headers: authToken ? { "Authorization": `Bearer ${authToken}` } : {}
+        });
+        const res = await resp.json();
+        if (!resp.ok) throw new Error(res.detail || "Failed to clear mock data");
+        showStatus("All mock data cleared successfully. Database is now an empty canvas ready for your real data.", "success");
+        await fetchDatabaseStatus();
+        await loadMetadata();
+        renderAdminSchedule();
+      } catch (err) {
+        showStatus("Clear mock data failed: " + err.message, "error");
+      }
+    }
+
+    async function promptResetDemoData() {
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Administrator privileges required.", "error");
+        switchMainView("AUTH");
+        return;
+      }
+      if (!confirm("Restore the default demo dataset (Alan Turing, Grace Hopper, CS101, etc.) for testing?")) {
+        return;
+      }
+      try {
+        const resp = await fetch("/api/admin/database/reset-demo", {
+          method: "POST",
+          headers: authToken ? { "Authorization": `Bearer ${authToken}` } : {}
+        });
+        const res = await resp.json();
+        if (!resp.ok) throw new Error(res.detail || "Failed to reset demo data");
+        showStatus("Default demo dataset restored successfully.", "success");
+        await fetchDatabaseStatus();
+        await loadMetadata();
+        renderAdminSchedule();
+      } catch (err) {
+        showStatus("Reset demo failed: " + err.message, "error");
+      }
+    }
+
+    function openDataImportModal() {
+      if (!currentUser || currentUser.role !== "ADMIN") {
+        showStatus("🔒 Authentication Required: Administrator privileges required.", "error");
+        switchMainView("AUTH");
+        return;
+      }
+      const modal = document.getElementById("modal-data-import");
+      if (modal) modal.classList.remove("hidden");
+    }
+
+    function closeDataImportModal() {
+      const modal = document.getElementById("modal-data-import");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    function handleImportFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById("import-json-textarea").value = e.target.result;
+        showStatus(`Loaded "${file.name}" into import box. Click 'Validate & Save to Database' to apply.`, "info");
+      };
+      reader.readAsText(file);
+    }
+
+    function loadSampleRealDataIntoTextarea() {
+      const sample = {
+        "clear_existing_mock_data": true,
+        "admin_email": "admin@apexuniversity.edu",
+        "admin_password": "ApexAdmin2026!",
+        "admin_name": "Prof. David Miller (Dean of Academic Affairs)",
+        "departments": [
+          { "code": "CSE", "name": "Computer Science & Engineering" },
+          { "code": "ECE", "name": "Electronics & Communication Engineering" },
+          { "code": "EEE", "name": "Electrical & Electronics Engineering" },
+          { "code": "MECH", "name": "Mechanical Engineering" },
+          { "code": "CIVIL", "name": "Civil Engineering" },
+          { "code": "IT", "name": "Information Technology" }
+        ],
+        "classrooms": [
+          { "room_number": "Auditorium-101", "building": "Academic Complex", "capacity": 120 },
+          { "room_number": "LH-201 (Lecture Hall)", "building": "Ramanujan Block", "capacity": 70 },
+          { "room_number": "LH-202 (Lecture Hall)", "building": "Ramanujan Block", "capacity": 70 },
+          { "room_number": "CSE-Lab-01 (Advanced Computing)", "building": "Turing Center", "capacity": 60 },
+          { "room_number": "ECE-Lab-01 (Embedded & DSP)", "building": "Bose Pavilion", "capacity": 60 }
+        ],
+        "faculty": [
+          { "full_name": "Dr. Rajesh Sharma", "email": "rajesh.sharma@apexuniversity.edu", "department_code": "CSE", "password": "faculty123" },
+          { "full_name": "Prof. Anita Desai", "email": "anita.desai@apexuniversity.edu", "department_code": "CSE", "password": "faculty123" },
+          { "full_name": "Dr. Vikram Seth", "email": "vikram.seth@apexuniversity.edu", "department_code": "CSE", "password": "faculty123" },
+          { "full_name": "Dr. Priya Nair", "email": "priya.nair@apexuniversity.edu", "department_code": "ECE", "password": "faculty123" },
+          { "full_name": "Prof. Arvind Rao", "email": "arvind.rao@apexuniversity.edu", "department_code": "ECE", "password": "faculty123" }
+        ],
+        "subjects": [
+          { "code": "CS101", "name": "Object Oriented Programming in Java", "department_code": "CSE", "semester_id": 1, "weekly_hours": 3, "is_lab": false },
+          { "code": "CS101L", "name": "Java Programming Laboratory", "department_code": "CSE", "semester_id": 1, "weekly_hours": 3, "is_lab": true },
+          { "code": "CS201", "name": "Data Structures & Algorithms", "department_code": "CSE", "semester_id": 3, "weekly_hours": 4, "is_lab": false },
+          { "code": "EC101", "name": "Digital Logic and Microprocessors", "department_code": "ECE", "semester_id": 1, "weekly_hours": 3, "is_lab": false },
+          { "code": "EC101L", "name": "Digital Systems Laboratory", "department_code": "ECE", "semester_id": 1, "weekly_hours": 3, "is_lab": true }
+        ],
+        "allocations": [
+          { "faculty_email": "rajesh.sharma@apexuniversity.edu", "subject_code": "CS101", "section_name": "A" },
+          { "faculty_email": "anita.desai@apexuniversity.edu", "subject_code": "CS201", "section_name": "B" },
+          { "faculty_email": "priya.nair@apexuniversity.edu", "subject_code": "EC101", "section_name": "C" }
+        ]
+      };
+      document.getElementById("import-json-textarea").value = JSON.stringify(sample, null, 2);
+      showStatus("Filled realistic university sample into editor.", "info");
+    }
+
+    async function submitInstitutionalDataImport() {
+      const textarea = document.getElementById("import-json-textarea");
+      const clearMock = document.getElementById("import-clear-mock-checkbox").checked;
+      const rawText = textarea.value.trim();
+      if (!rawText) {
+        showStatus("Please paste valid JSON or choose a JSON file to import.", "error");
+        return;
+      }
+      let parsedData;
+      try {
+        parsedData = JSON.parse(rawText);
+      } catch (e) {
+        showStatus("Invalid JSON syntax: " + e.message, "error");
+        return;
+      }
+      parsedData.clear_existing_mock_data = clearMock;
+
+      try {
+        const resp = await fetch("/api/admin/database/import", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authToken ? { "Authorization": `Bearer ${authToken}` } : {})
+          },
+          body: JSON.stringify(parsedData)
+        });
+        const res = await resp.json();
+        if (!resp.ok) throw new Error(res.detail || "Import failed");
+
+        closeDataImportModal();
+        showStatus(`Import Successful: ${res.total_faculty} Faculty, ${res.total_subjects} Subjects, ${res.total_classrooms} Classrooms loaded!`, "success");
+        await fetchDatabaseStatus();
+        await loadMetadata();
+        renderAdminSchedule();
+      } catch (err) {
+        showStatus("Data Import Failed: " + err.message, "error");
+      }
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      init();
+      loadMetadata();
+      fetchDatabaseStatus();
+    });
   </script>
 </body>
 
