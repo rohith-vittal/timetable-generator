@@ -63,7 +63,7 @@ class FacultyAllocationResponse(BaseModel):
 # Timetable Generation Request
 # -------------------------------------------------------------
 class GenerationRequest(BaseModel):
-    title: str = Field(..., json_schema_extra={"example": "Fall 2026 Master Timetable"})
+    title: Optional[str] = Field(default="Master Institutional Timetable", json_schema_extra={"example": "Fall 2026 Master Timetable"})
     scope: ScheduleScope = Field(..., description="Scope: DAY, WEEK, or YEAR")
     target_date: Optional[str] = Field(None, json_schema_extra={"example": "2026-10-19"}, description="Required if scope is DAY")
     academic_year_id: int = Field(default=1)
@@ -144,11 +144,33 @@ class RegisterRequest(BaseModel):
 # -------------------------------------------------------------
 # Bot Situational Timetable Creation Schemas
 # -------------------------------------------------------------
+class SubstitutionDetail(BaseModel):
+    slot_index: int
+    time: str
+    subject_code: str
+    subject_name: str
+    classroom: str
+    original_faculty: str
+    substitute_faculty: str
+    section_name: str
+    department_code: str
+    year_id: int
+    semester_id: int
+
 class BotScenarioRequest(BaseModel):
-    prompt: str = Field(..., json_schema_extra={"example": "Create an emergency conflict-free schedule for tomorrow with 0 blank slots and balanced labs"})
+    prompt: Optional[str] = Field(default=None, json_schema_extra={"example": "Dr. Grace Hopper is absent today. Adjust timetable for Year 1, Semester 1, Section A."})
+    situation_prompt: Optional[str] = Field(default=None, json_schema_extra={"example": "Dr. Grace Hopper is absent today. Adjust timetable for Year 1, Semester 1, Section A."})
     scope: Optional[ScheduleScope] = Field(default=None, description="Optional override. Auto-detected from prompt if omitted.")
     target_date: Optional[str] = Field(default=None, json_schema_extra={"example": "2026-10-19"}, description="Required if scope is DAY")
     department_id: Optional[int] = Field(default=None, description="Optional department filter focus")
+    year_id: Optional[int] = Field(default=None, description="Optional year filter focus")
+    semester_id: Optional[int] = Field(default=None, description="Optional semester filter focus")
+    section_id: Optional[int] = Field(default=None, description="Optional section filter focus")
+    section_name: Optional[str] = Field(default=None, description="Optional section letter focus (A-F)")
+    absent_faculty_name: Optional[str] = Field(default=None, description="Optional explicit absent faculty name or email")
+
+    def get_prompt_text(self) -> str:
+        return (self.prompt or self.situation_prompt or "").strip()
 
 class BotInsightMetrics(BaseModel):
     total_periods_scheduled: int
@@ -165,6 +187,9 @@ class BotScenarioResponse(BaseModel):
     scope: ScheduleScope
     generation: TimetableGenerationResponse
     insights: BotInsightMetrics
+    entries: Optional[List[TimetableEntryResponse]] = None
+    substitutions: Optional[List[SubstitutionDetail]] = None
+    target_cohort: Optional[str] = None
 
 # -------------------------------------------------------------
 # Institutional Real Data Import & Database Management Schemas

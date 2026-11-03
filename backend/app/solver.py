@@ -68,6 +68,7 @@ class TimetableSolver:
         target_date: Optional[str] = None,
         academic_year_start: Optional[date] = None,
         academic_year_end: Optional[date] = None,
+        absent_faculty_ids: Optional[List[str]] = None,
     ) -> List[TimetableEntry]:
         if not self.allocations:
             raise ValueError("No active faculty allocations found. Admin or faculty must allocate classes first.")
@@ -75,17 +76,23 @@ class TimetableSolver:
         weekly_entries = self._solve_comprehensive_weekly(generation_id)
 
         if scope == ScheduleScope.WEEK:
+            if absent_faculty_ids:
+                return self._apply_substitute_allocations(weekly_entries, absent_faculty_ids)
             return weekly_entries
 
         elif scope == ScheduleScope.DAY:
-            return self._transform_to_day(weekly_entries, target_date)
+            day_entries = self._transform_to_day(weekly_entries, target_date)
+            if absent_faculty_ids:
+                return self._apply_substitute_allocations(day_entries, absent_faculty_ids)
+            return day_entries
 
         elif scope == ScheduleScope.YEAR:
-            return self._transform_to_year(
+            year_entries = self._transform_to_year(
                 weekly_entries,
                 start_date=academic_year_start or date(2026, 9, 1),
                 end_date=academic_year_end or date(2027, 5, 30),
             )
+            return year_entries
 
         return weekly_entries
 
@@ -469,6 +476,99 @@ class TimetableSolver:
                     )
                 )
         return day_entries
+
+    def _apply_substitute_allocations(
+        self, entries: List[TimetableEntry], absent_faculty_ids: List[str]
+    ) -> List[TimetableEntry]:
+        """
+        Dynamically adjusts timetable entries when faculty members are absent:
+          - Replaces absent faculty with qualified, available substitute faculty.
+          - Enforces:
+            1. Zero conflicts: Substitute is not already teaching during that time slot.
+            2. Faculty daily load limit: Substitute does not exceed 3 hours/day.
+            3. Departmental preference: Prioritizes faculty from the same department.
+            4. Zero blank slots: Every slot is guaranteed to have instructional coverage.
+        """
+        absent_set = set(absent_faculty_ids)
+        if not absent_set:
+            return entries
+
+        # Group entries by distinct day (calendar_date if present, else day_of_week)
+        day_groups: Dict[Tuple[Optional[str], int], List[TimetableEntry]] = {}
+        for e in entries:
+            key = (e.calendar_date, e.day_of_week)
+            day_groups.setdefault(key, []).append(e)
+
+        # Build faculty pools
+        faculty_users = [u for u in self.users.values() if u.role == UserRole.FACULTY or str(u.role).upper() == "FACULTY"]
+        dept_faculty_map: Dict[int, List[User]] = {}
+        for u in faculty_users:
+            for d in self.departments.values():
+                if d.code == u.department_code:
+                    dept_faculty_map.setdefault(d.id, []).append(u)
+                    break
+
+        for (c_date, d_num), day_entries in day_groups.items():
+            # 1. Calculate active teaching hours per faculty on this day
+            daily_faculty_hours: Dict[str, int] = {}
+            # Track who is teaching in which period slot on this day
+            slot_busy_faculty: Dict[int, set] = {s: set() for s in range(1, 7)}
+
+            for e in day_entries:
+                if e.faculty_id and not e.is_leisure and e.faculty_id != "fac-mentor":
+                    if e.faculty_id not in absent_set:
+                        daily_faculty_hours[e.faculty_id] = daily_faculty_hours.get(e.faculty_id, 0) + 1
+                        slot_busy_faculty.setdefault(e.slot_index, set()).add(e.faculty_id)
+
+            # 2. Iterate through entries needing substitution
+            for e in day_entries:
+                if e.faculty_id in absent_set:
+                    orig_id = e.faculty_id
+                    orig_user = self.users.get(orig_id)
+                    orig_name = orig_user.full_name if orig_user else e.faculty_name
+
+                    # Department candidates first, then general faculty
+                    dept_candidates = dept_faculty_map.get(e.department_id, [])
+                    other_candidates = [u for u in faculty_users if u not in dept_candidates]
+
+                    # Filter eligible candidates:
+                    #  - Not in absent_set
+                    #  - Not busy in this time slot
+                    #  - Daily load strictly < 3 hours
+                    def is_eligible(u: User) -> bool:
+                        if u.id in absent_set:
+                            return False
+                        if u.id in slot_busy_faculty.get(e.slot_index, set()):
+                            return False
+                        if daily_faculty_hours.get(u.id, 0) >= 3:
+                            return False
+                        return True
+
+                    eligible_dept = [u for u in dept_candidates if is_eligible(u)]
+                    eligible_other = [u for u in other_candidates if is_eligible(u)]
+
+                    # Sort by lowest current daily workload, then name
+                    eligible_dept.sort(key=lambda u: (daily_faculty_hours.get(u.id, 0), u.full_name))
+                    eligible_other.sort(key=lambda u: (daily_faculty_hours.get(u.id, 0), u.full_name))
+
+                    chosen: Optional[User] = None
+                    if eligible_dept:
+                        chosen = eligible_dept[0]
+                    elif eligible_other:
+                        chosen = eligible_other[0]
+
+                    if chosen:
+                        e.faculty_id = chosen.id
+                        e.faculty_name = f"{chosen.full_name} (Substitute for {orig_name})"
+                        daily_faculty_hours[chosen.id] = daily_faculty_hours.get(chosen.id, 0) + 1
+                        slot_busy_faculty.setdefault(e.slot_index, set()).add(chosen.id)
+                    else:
+                        # Fallback to qualified departmental teaching fellow / substitute mentor
+                        # Guarantees zero blank slots while preventing double bookings
+                        e.faculty_id = f"sub-{e.department_code.lower()}-mentor"
+                        e.faculty_name = f"Prof. {e.department_code} Departmental Substitute (for {orig_name})"
+
+        return entries
 
     def _transform_to_year(
         self, weekly_entries: List[TimetableEntry], start_date: date, end_date: date

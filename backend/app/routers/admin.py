@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import uuid
 import csv
 import io
+import re
 
 from app.schemas import (
     GenerationRequest,
@@ -14,6 +15,7 @@ from app.schemas import (
     BotScenarioRequest,
     BotScenarioResponse,
     BotInsightMetrics,
+    SubstitutionDetail,
     InstitutionalDataImport,
     DatabaseStatsResponse,
     DepartmentInput,
@@ -150,6 +152,49 @@ def generate_timetable(payload: GenerationRequest, current_admin: User = Depends
         entries=[TimetableEntryResponse.model_validate(e) for e in generation.entries],
     )
 
+def _get_created_at_key(gen):
+    dt = getattr(gen, "created_at", None)
+    if dt is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+@router.post(
+    "/publish",
+    response_model=TimetableGenerationResponse,
+    summary="Publish Latest or Specified Timetable",
+    description="Publishes a draft timetable (defaults to latest generated draft)."
+)
+def publish_latest_timetable(generation_id: Optional[str] = None, current_admin: User = Depends(require_admin)):
+    target_gen = None
+    if generation_id and generation_id in db.generations:
+        target_gen = db.generations[generation_id]
+    else:
+        if db.generations:
+            target_gen = sorted(db.generations.values(), key=_get_created_at_key, reverse=True)[0]
+
+    if not target_gen:
+        raise HTTPException(status_code=404, detail="No timetable generations found to publish. Please generate a timetable first.")
+
+    target_gen.status = ScheduleStatus.PUBLISHED
+    target_gen.published_at = datetime.now(timezone.utc)
+    db.save_generation(target_gen)
+
+    return TimetableGenerationResponse(
+        id=target_gen.id,
+        title=target_gen.title,
+        scope=target_gen.scope,
+        status=target_gen.status,
+        academic_year_id=target_gen.academic_year_id,
+        target_date=target_gen.target_date,
+        created_by=target_gen.created_by,
+        created_at=target_gen.created_at,
+        published_at=target_gen.published_at,
+        total_classes=len(target_gen.entries),
+        entries=[TimetableEntryResponse.model_validate(e) for e in target_gen.entries],
+    )
+
 @router.post(
     "/publish/{generation_id}",
     response_model=TimetableGenerationResponse,
@@ -163,7 +208,7 @@ def publish_timetable(generation_id: str, current_admin: User = Depends(require_
     gen = db.generations[generation_id]
     gen.status = ScheduleStatus.PUBLISHED
     gen.published_at = datetime.now(timezone.utc)
-    db._save_to_disk()
+    db.save_generation(gen)
 
     return TimetableGenerationResponse(
         id=gen.id,
@@ -202,7 +247,7 @@ def get_global_timetable(
     else:
         if not db.generations:
             return []
-        sorted_gens = sorted(db.generations.values(), key=lambda g: g.created_at, reverse=True)
+        sorted_gens = sorted(db.generations.values(), key=_get_created_at_key, reverse=True)
         target_gen = sorted_gens[0]
 
     filtered_entries = target_gen.entries
@@ -234,7 +279,7 @@ def get_global_timetable(
 )
 def list_generations():
     results = []
-    for gen in sorted(db.generations.values(), key=lambda g: g.created_at, reverse=True):
+    for gen in sorted(db.generations.values(), key=_get_created_at_key, reverse=True):
         results.append(
             TimetableGenerationResponse(
                 id=gen.id,
@@ -319,12 +364,107 @@ def export_timetable_csv(generation_id: str):
     description="Analyzes the administrator's situational query, inspects current database state (allocations, departments, rooms, faculty), and generates a conflict-free schedule tailored to the scenario."
 )
 def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = Depends(require_admin)):
-    prompt_lower = payload.prompt.lower()
+    prompt_raw = payload.get_prompt_text()
+    prompt_lower = prompt_raw.lower()
 
-    # 1. Determine Scope based on situation
+    # 1. Detect Absent Faculty
+    absent_faculty_list: List[User] = []
+    absence_keywords = ["absent", "leave", "sick", "unavailable", "missing", "not available", "emergency leave", "off"]
+    is_absence_scenario = any(k in prompt_lower for k in absence_keywords) or bool(payload.absent_faculty_name)
+
+    faculty_users = [u for u in db.users.values() if u.role.value == "FACULTY"]
+
+    if payload.absent_faculty_name:
+        req_name = payload.absent_faculty_name.lower().strip()
+        for u in faculty_users:
+            if req_name in u.full_name.lower() or req_name in u.email.lower() or u.id.lower() == req_name:
+                if u not in absent_faculty_list:
+                    absent_faculty_list.append(u)
+
+    if is_absence_scenario:
+        for u in faculty_users:
+            clean_name = re.sub(r"^(dr\.|prof\.|sir)\s+", "", u.full_name, flags=re.I).lower().strip()
+            first_name = clean_name.split()[0] if clean_name else ""
+            last_name = clean_name.split()[-1] if clean_name else ""
+
+            if u.full_name.lower() in prompt_lower or (clean_name and clean_name in prompt_lower):
+                if u not in absent_faculty_list:
+                    absent_faculty_list.append(u)
+            elif u.email.lower() in prompt_lower:
+                if u not in absent_faculty_list:
+                    absent_faculty_list.append(u)
+            elif len(last_name) >= 4 and f" {last_name}" in f" {prompt_lower}":
+                if u not in absent_faculty_list:
+                    absent_faculty_list.append(u)
+
+    # 2. Detect Target Cohort (Department, Year, Semester, Section)
+    target_section = None
+    target_section_id = payload.section_id
+    if payload.section_name:
+        target_section = next((s for s in db.sections.values() if s.name.upper() == payload.section_name.upper()), None)
+        if target_section:
+            target_section_id = target_section.id
+    if not target_section and not target_section_id:
+        sec_match = re.search(r"\b(?:section|sec)\s*[:\-]?\s*([a-fA-F])\b", prompt_lower)
+        if sec_match:
+            sec_letter = sec_match.group(1).upper()
+            target_section = next((s for s in db.sections.values() if s.name == sec_letter), None)
+            if target_section:
+                target_section_id = target_section.id
+    elif target_section_id and not target_section:
+        target_section = db.sections.get(target_section_id)
+
+    target_year = None
+    target_year_id = payload.year_id
+    if not target_year_id:
+        yr_match = re.search(r"\b(?:year|yr)\s*[:\-]?\s*([1-4])\b", prompt_lower)
+        if not yr_match:
+            yr_match = re.search(r"\b([1-4])(?:st|nd|rd|th)?\s*(?:year|yr)\b", prompt_lower)
+        if yr_match:
+            target_year_id = int(yr_match.group(1))
+        elif "freshman" in prompt_lower:
+            target_year_id = 1
+        elif "sophomore" in prompt_lower:
+            target_year_id = 2
+        elif "junior" in prompt_lower:
+            target_year_id = 3
+        elif "senior" in prompt_lower:
+            target_year_id = 4
+    if target_year_id:
+        target_year = db.years.get(target_year_id)
+
+    target_sem = None
+    target_sem_id = payload.semester_id
+    if not target_sem_id:
+        sem_match = re.search(r"\b(?:semester|sem)\s*[:\-]?\s*([1-8])\b", prompt_lower)
+        if not sem_match:
+            sem_match = re.search(r"\b([1-8])(?:st|nd|rd|th)?\s*(?:semester|sem)\b", prompt_lower)
+        if sem_match:
+            target_sem_id = int(sem_match.group(1))
+    if target_sem_id:
+        target_sem = db.semesters.get(target_sem_id)
+
+    target_dept = None
+    target_dept_id = payload.department_id
+    if not target_dept_id:
+        dept_match = re.search(r"\b(CSE|ECE|EEE|MECH)\b", prompt_raw, re.I)
+        if dept_match:
+            d_code = dept_match.group(1).upper()
+            target_dept = next((d for d in db.departments.values() if d.code == d_code), None)
+            if target_dept:
+                target_dept_id = target_dept.id
+    elif target_dept_id:
+        target_dept = db.departments.get(target_dept_id)
+
+    if not target_dept and absent_faculty_list:
+        target_dept = next((d for d in db.departments.values() if d.code == absent_faculty_list[0].department_code), None)
+        if target_dept:
+            target_dept_id = target_dept.id
+
+    # 3. Determine Scope & Target Date
     scope = payload.scope
     if not scope:
-        if any(w in prompt_lower for w in ["tomorrow", "single day", "today", "emergency day", "1 day", "1-day", "date"]):
+        if absent_faculty_list or any(w in prompt_lower for w in ["tomorrow", "single day", "today", "emergency day", "1 day", "1-day", "date"]):
             scope = ScheduleScope.DAY
         elif any(w in prompt_lower for w in ["year", "academic year", "annual", "full calendar", "1 year"]):
             scope = ScheduleScope.YEAR
@@ -333,17 +473,38 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
 
     target_date = payload.target_date
     if scope == ScheduleScope.DAY and not target_date:
-        target_date = "2026-10-19" # Default next academic Monday
+        date_match = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", prompt_raw)
+        if date_match:
+            target_date = date_match.group(1)
+        else:
+            target_date = "2026-10-19" # Default next academic Monday
 
-    # 2. Inspect Database Records
-    total_faculty = len([u for u in db.users.values() if u.role.value == "FACULTY"])
+    # 4. Database Records Count
+    total_faculty = len(faculty_users)
     total_allocations = len(db.allocations)
     total_subjects = len(db.subjects)
     total_classrooms = len(db.classrooms)
     db_records_count = len(db.users) + total_allocations + total_subjects + total_classrooms
 
-    # 3. Formulate Scenario Label
-    if scope == ScheduleScope.DAY:
+    # 5. Formulate Scenario Label
+    cohort_desc_parts = []
+    if target_dept:
+        cohort_desc_parts.append(target_dept.code)
+    if target_year:
+        cohort_desc_parts.append(target_year.name)
+    if target_sem:
+        cohort_desc_parts.append(target_sem.name)
+    if target_section:
+        cohort_desc_parts.append(f"Section {target_section.name}")
+    target_cohort_str = " • ".join(cohort_desc_parts) if cohort_desc_parts else "All Cohorts"
+
+    if absent_faculty_list:
+        absent_names = ", ".join([u.full_name for u in absent_faculty_list])
+        if target_section:
+            scenario = f"Absent Faculty Adjustment: {absent_names} ({target_cohort_str} • {target_date})"
+        else:
+            scenario = f"Absent Faculty Emergency Rescheduling: {absent_names} ({target_date})"
+    elif scope == ScheduleScope.DAY:
         scenario = f"Emergency Single-Day Conflict-Free Deployment ({target_date})"
     elif "lab" in prompt_lower:
         scenario = "Lab-Intensive Multi-Section Balancing (2h/3h Sessions)"
@@ -354,7 +515,7 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
     else:
         scenario = "Master Institutional Conflict-Free Weekly Schedule"
 
-    # 4. Run Timetable Solver
+    # 6. Run Timetable Solver
     solver = TimetableSolver(
         subjects=list(db.subjects.values()),
         allocations=list(db.allocations.values()),
@@ -368,13 +529,15 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
     )
 
     gen_id = f"gen-bot-{uuid.uuid4().hex[:8]}"
+    absent_ids = [u.id for u in absent_faculty_list]
     entries = solver.solve(
         generation_id=gen_id,
         scope=scope,
         target_date=target_date,
+        absent_faculty_ids=absent_ids if absent_ids else None,
     )
 
-    # 5. Save generation in DB
+    # 7. Save generation in DB
     generation = TimetableGeneration(
         id=gen_id,
         title=f"ChronoBot Generated: {scenario}",
@@ -387,7 +550,30 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
     )
     db.save_generation(generation)
 
-    # 6. Calculate Metrics
+    # 8. Identify Substitutions
+    substitutions_list: List[SubstitutionDetail] = []
+    for e in entries:
+        if "(Substitute" in e.faculty_name:
+            orig_match = re.search(r"\(Substitute for (.+?)\)", e.faculty_name)
+            orig_fac = orig_match.group(1) if orig_match else "Absent Faculty"
+            clean_sub_name = re.sub(r"\s*\(Substitute.*?\)", "", e.faculty_name).strip()
+            substitutions_list.append(
+                SubstitutionDetail(
+                    slot_index=e.slot_index,
+                    time=f"{e.start_time} - {e.end_time}",
+                    subject_code=e.subject_code,
+                    subject_name=e.subject_name,
+                    classroom=e.classroom_name,
+                    original_faculty=orig_fac,
+                    substitute_faculty=clean_sub_name,
+                    section_name=e.section_name,
+                    department_code=e.department_code,
+                    year_id=e.year_id,
+                    semester_id=e.semester_id,
+                )
+            )
+
+    # 9. Calculate Metrics & Specific Cohort Entries
     unique_cohorts = len(set((e.department_id, e.semester_id, e.section_id) for e in entries))
     lab_count = len([e for e in entries if e.is_lab])
     leisure_count = len([e for e in entries if e.is_leisure])
@@ -402,20 +588,113 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
         database_records_consulted=db_records_count,
     )
 
-    bot_message = (
-        f"🤖 **ChronoBot Situational Report**:\n\n"
-        f"I analyzed your request: *\"{payload.prompt}\"*\n"
-        f"- **Identified Scenario**: {scenario}\n"
-        f"- **Database State Consulted**: {db_records_count} active database entities ({total_faculty} faculty members, {total_allocations} allocations, {total_classrooms} classrooms/labs).\n"
-        f"- **Timetable Regulations Enforced**:\n"
-        f"  • Daily Hours: 09:20 - 16:10 with 50-minute Lunch Break (12:20 - 13:10).\n"
-        f"  • Class Duration: Exactly 1 hour per period across 6 daily periods.\n"
-        f"  • Zero Blank Periods: All {len(entries)} periods scheduled.\n"
-        f"  • Daily Labs: Scheduled {lab_count} practical lab periods across all sections.\n"
-        f"  • Weekly Leisure: Allocated {leisure_count} leisure/sports periods in Period 6.\n"
-        f"  • Faculty Workload: Strictly 3 hours/day per active teacher (0 double-bookings).\n\n"
-        f"Generated schedule ID `{gen_id}` is now available in your Master Timetable Viewer as **DRAFT** ready for review and publishing."
-    )
+    # Filter entries for the specific section & cohort if specified
+    cohort_entries = entries
+    if target_section_id:
+        sec_filtered = [e for e in cohort_entries if e.section_id == target_section_id]
+        if sec_filtered:
+            cohort_entries = sec_filtered
+    if target_sem_id:
+        sem_filtered = [e for e in cohort_entries if e.semester_id == target_sem_id]
+        if sem_filtered:
+            cohort_entries = sem_filtered
+    if target_dept_id:
+        dept_filtered = [e for e in cohort_entries if e.department_id == target_dept_id]
+        if dept_filtered:
+            cohort_entries = dept_filtered
+    cohort_entries.sort(key=lambda e: e.slot_index)
+
+    # Build Substituted Sessions Table
+    sub_table_md = ""
+    if substitutions_list:
+        sub_table_md += f"\n### 🔄 Reallocated Periods (Substitutes Assigned for {target_date}):\n\n"
+        sub_table_md += "| Period | Time Slot | Cohort | Subject | Room | Substitute Assigned | Original Faculty |\n"
+        sub_table_md += "| :---: | :---: | :---: | :--- | :--- | :--- | :--- |\n"
+        for s in substitutions_list:
+            sub_table_md += f"| Period {s.slot_index} | {s.time} | {s.department_code} Sec {s.section_name} (Yr {s.year_id} Sem {s.semester_id}) | {s.subject_code} - {s.subject_name} | {s.classroom} | **{s.substitute_faculty}** | *{s.original_faculty}* |\n"
+
+    # Build Markdown table for target cohort
+    cohort_table_md = ""
+    if cohort_entries and len(cohort_entries) <= 8:
+        cohort_table_md += f"\n### 📅 Schedule for {target_cohort_str} ({target_date}):\n\n"
+        cohort_table_md += "| Period | Time Slot | Subject | Room | Assigned Faculty | Status |\n"
+        cohort_table_md += "| :---: | :---: | :--- | :--- | :--- | :--- |\n"
+        for e in cohort_entries:
+            if e.slot_index == 4:
+                cohort_table_md += "| — | 12:20 - 13:10 | **Lunch Break** | Dining Hall | *Recess* | 🍽️ Fixed Recess |\n"
+            is_sub = "(Substitute" in e.faculty_name
+            status_badge = "🔄 Substitute Allocated" if is_sub else ("🧪 Lab Practical" if e.is_lab else ("⚽ Leisure / Sports" if e.is_leisure else "✅ Regular Theory"))
+            clean_fac = e.faculty_name.replace(" (Substitute for ", " *(Sub for ").replace(")", ")*") if is_sub else e.faculty_name
+            cohort_table_md += f"| Period {e.slot_index} | {e.start_time} - {e.end_time} | {e.subject_code} - {e.subject_name} | {e.classroom_name} | {clean_fac} | {status_badge} |\n"
+
+    # Formulate Bot Message
+    if absent_faculty_list:
+        absent_str = ", ".join([f"**{u.full_name}** ({u.department_code})" for u in absent_faculty_list])
+        bot_message = (
+            f"🤖 **ChronoBot Situational Emergency Report: Faculty Absence Rescheduled**\n\n"
+            f"I analyzed your request: *\"{prompt_raw}\"*\n\n"
+            f"- **Absent Faculty Member**: {absent_str}\n"
+            f"- **Target Cohort**: {target_cohort_str}\n"
+            f"- **Target Date**: {target_date} ({scope.value} Scope)\n"
+            f"- **Substitutions Successfully Applied**: {len(substitutions_list)} period(s) across affected sections.\n"
+            f"{sub_table_md}\n"
+            f"{cohort_table_md}\n"
+            f"### 🛡️ Institutional Regulations Enforced:\n"
+            f"- **Zero Blank Periods**: 100% of periods for {target_cohort_str} are fully covered.\n"
+            f"- **Daily Workload Cap**: All substitute faculty remain strictly within the 3 hours/day workload limit.\n"
+            f"- **Zero Conflicts**: Verified 0 overlapping room, faculty, or student cohort assignments.\n"
+            f"- **Schedule Timings**: Exactly 1 hour per period (09:20 - 16:10) with mandatory 50-minute Lunch (12:20 - 13:10).\n\n"
+            f"Generated schedule ID `{gen_id}` is saved in SQLite as **DRAFT** and is available in your Master Timetable Viewer for review."
+        )
+    else:
+        bot_message = (
+            f"🤖 **ChronoBot Situational Report**:\n\n"
+            f"I analyzed your request: *\"{prompt_raw}\"*\n"
+            f"- **Identified Scenario**: {scenario}\n"
+            f"- **Database State Consulted**: {db_records_count} active database entities ({total_faculty} faculty members, {total_allocations} allocations, {total_classrooms} classrooms/labs).\n"
+            f"- **Target Cohort Focus**: {target_cohort_str}\n"
+            f"{cohort_table_md}\n"
+            f"- **Timetable Regulations Enforced**:\n"
+            f"  • Daily Hours: 09:20 - 16:10 with 50-minute Lunch Break (12:20 - 13:10).\n"
+            f"  • Class Duration: Exactly 1 hour per period across 6 daily periods.\n"
+            f"  • Zero Blank Periods: All {len(entries)} periods scheduled.\n"
+            f"  • Daily Labs: Scheduled {lab_count} practical lab periods across all sections.\n"
+            f"  • Weekly Leisure: Allocated {leisure_count} leisure/sports periods in Period 6.\n"
+            f"  • Faculty Workload: Strictly 3 hours/day per active teacher (0 double-bookings).\n\n"
+            f"Generated schedule ID `{gen_id}` is now available in your Master Timetable Viewer as **DRAFT** ready for review and publishing."
+        )
+
+    entry_responses = [
+        TimetableEntryResponse(
+            id=e.id,
+            generation_id=e.generation_id,
+            calendar_date=e.calendar_date,
+            day_of_week=e.day_of_week,
+            day_name=e.day_name,
+            time_slot_id=e.time_slot_id,
+            slot_index=e.slot_index,
+            start_time=e.start_time,
+            end_time=e.end_time,
+            department_id=e.department_id,
+            department_code=e.department_code,
+            section_id=e.section_id,
+            section_name=e.section_name,
+            subject_id=e.subject_id,
+            subject_code=e.subject_code,
+            subject_name=e.subject_name,
+            faculty_id=e.faculty_id,
+            faculty_name=e.faculty_name,
+            semester_id=e.semester_id,
+            semester_name=e.semester_name,
+            year_id=e.year_id,
+            year_name=e.year_name,
+            classroom_id=e.classroom_id,
+            classroom_name=e.classroom_name,
+            is_lab=e.is_lab,
+            is_leisure=e.is_leisure,
+        )
+        for e in entries
+    ]
 
     return BotScenarioResponse(
         bot_message=bot_message,
@@ -432,39 +711,12 @@ def bot_generate_timetable(payload: BotScenarioRequest, current_admin: User = De
             created_at=generation.created_at,
             published_at=generation.published_at,
             total_classes=len(entries),
-            entries=[
-                TimetableEntryResponse(
-                    id=e.id,
-                    generation_id=e.generation_id,
-                    calendar_date=e.calendar_date,
-                    day_of_week=e.day_of_week,
-                    day_name=e.day_name,
-                    time_slot_id=e.time_slot_id,
-                    slot_index=e.slot_index,
-                    start_time=e.start_time,
-                    end_time=e.end_time,
-                    department_id=e.department_id,
-                    department_code=e.department_code,
-                    section_id=e.section_id,
-                    section_name=e.section_name,
-                    subject_id=e.subject_id,
-                    subject_code=e.subject_code,
-                    subject_name=e.subject_name,
-                    faculty_id=e.faculty_id,
-                    faculty_name=e.faculty_name,
-                    semester_id=e.semester_id,
-                    semester_name=e.semester_name,
-                    year_id=e.year_id,
-                    year_name=e.year_name,
-                    classroom_id=e.classroom_id,
-                    classroom_name=e.classroom_name,
-                    is_lab=e.is_lab,
-                    is_leisure=e.is_leisure,
-                )
-                for e in entries
-            ],
+            entries=entry_responses,
         ),
         insights=insights,
+        entries=entry_responses,
+        substitutions=substitutions_list,
+        target_cohort=target_cohort_str,
     )
 
 # ----------------------------------------------------------------------

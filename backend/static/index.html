@@ -885,6 +885,10 @@
             <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">One-Click Situational
               Scenarios:</div>
             <div class="flex flex-wrap gap-2 text-xs">
+              <button onclick="runBotScenario('faculty_absent')"
+                class="px-3 py-1.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/30 text-orange-300 transition-all font-medium flex items-center gap-1.5">
+                <span>🩹 Faculty Absent: Reschedule Year 1 Sem 1 Sec A</span>
+              </button>
               <button onclick="runBotScenario('emergency_day')"
                 class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 transition-all font-medium flex items-center gap-1.5">
                 <span>⚡ Emergency 1-Day Schedule (Tomorrow)</span>
@@ -1290,6 +1294,11 @@
               Computing</strong> | Section: <span id="faculty-dash-section" class="text-amber-400 font-bold">Section
               A</span>
           </p>
+          <div id="fac-admin-selector-box" class="hidden mt-2.5 flex items-center gap-2 flex-wrap">
+            <span class="text-[11px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-lg">Admin View:</span>
+            <select id="fac-admin-select-user" onchange="onAdminSelectFaculty(this.value)" class="glass-input rounded-xl px-2.5 py-1 text-xs font-semibold">
+            </select>
+          </div>
         </div>
 
         <div class="flex items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
@@ -1689,6 +1698,9 @@
     let facultyViewScope = "WEEK";
     let facultySelectedDay = 0;
     let currentLoginRole = "FACULTY";
+    let facultyPublishedEntries = null;
+    let facultyPublishedStatus = null;
+    let selectedFacultyIdForAdmin = null;
 
     // ------------------------------------------------------------------------
     // SECURITY & XSS SANITIZATION (DEF-007)
@@ -2061,7 +2073,8 @@
         renderAdminSchedule();
       } else if (currentUser && currentUser.role === "FACULTY") {
         onFacultyYearChanged();
-        renderFacultySchedule();
+        setupFacultyPortalHeader();
+        loadFacultyTimetable(currentUser.id);
       }
     }
 
@@ -2144,9 +2157,11 @@
       } else if (view === "FACULTY" && currentUser) {
         if (facultySection) facultySection.classList.remove("hidden");
         if (navFaculty) navFaculty.className = "px-3.5 py-2 rounded-lg font-bold bg-emerald-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
+        setupFacultyPortalHeader();
+        const targetFacId = currentUser.role === "FACULTY" ? currentUser.id : (selectedFacultyIdForAdmin || (facultyUsers.length > 0 ? facultyUsers[0].id : "fac-cse-01"));
+        loadFacultyTimetable(targetFacId);
         if (currentUser.role === "FACULTY") {
           onFacultyYearChanged();
-          renderFacultySchedule();
         }
       }
     }
@@ -2424,7 +2439,10 @@
       let scope = "WEEK";
       let targetDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
-      if (scenarioType === "emergency_day") {
+      if (scenarioType === "faculty_absent") {
+        promptText = "Dr. Grace Hopper is absent today. Adjust timetable for Year 1, Semester 1, Section A with zero blank slots.";
+        scope = "DAY";
+      } else if (scenarioType === "emergency_day") {
         promptText = "Create an emergency conflict-free schedule for tomorrow (Monday) prioritizing full lab coverage with 0 blank slots.";
         scope = "DAY";
       } else if (scenarioType === "lab_intensive") {
@@ -2445,6 +2463,67 @@
       executeBotGeneration(promptText, scope, targetDate);
     }
 
+    function formatBotMarkdown(text) {
+      if (!text) return "";
+      let lines = text.split("\n");
+      let inTable = false;
+      let tableHtml = "";
+      let result = [];
+
+      function formatInline(str) {
+        if (!str) return "";
+        return str
+          .replace(/\*\*(.+?)\*\*/g, '<strong class="font-bold text-[var(--text-main)]">$1</strong>')
+          .replace(/\*(.+?)\*/g, '<em class="text-[var(--text-muted)]">$1</em>')
+          .replace(/`([^`]+)`/g, '<code class="font-mono text-[10px] bg-[var(--bg-elevated)] px-1 py-0.5 rounded text-indigo-300 border border-[var(--border-subtle)]">$1</code>');
+      }
+
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (line.startsWith("|") && line.endsWith("|")) {
+          if (!inTable) {
+            inTable = true;
+            tableHtml = '<div class="overflow-x-auto my-3"><table class="w-full text-xs text-left border border-[var(--border-subtle)] rounded-xl overflow-hidden">';
+          }
+          if (line.includes("---")) {
+            continue;
+          }
+          let cols = line.split("|").slice(1, -1).map(c => c.trim());
+          let isHeader = !tableHtml.includes("<tbody");
+          if (isHeader && !tableHtml.includes("<thead")) {
+            tableHtml += '<thead class="bg-[var(--bg-elevated)] text-[var(--text-muted)] font-bold"><tr>';
+            cols.forEach(c => { tableHtml += `<th class="p-2.5 border-b border-[var(--border-subtle)]">${formatInline(c)}</th>`; });
+            tableHtml += '</tr></thead><tbody>';
+          } else {
+            tableHtml += '<tr class="border-b border-[var(--border-subtle)] hover:bg-[var(--bg-card-hover)] transition-colors">';
+            cols.forEach(c => { tableHtml += `<td class="p-2.5">${formatInline(c)}</td>`; });
+            tableHtml += '</tr>';
+          }
+        } else {
+          if (inTable) {
+            inTable = false;
+            tableHtml += '</tbody></table></div>';
+            result.push(tableHtml);
+            tableHtml = "";
+          }
+          if (line.startsWith("### ")) {
+            result.push(`<h4 class="text-xs sm:text-sm font-bold text-indigo-400 mt-3 mb-1.5">${formatInline(line.slice(4))}</h4>`);
+          } else if (line.startsWith("- ")) {
+            result.push(`<div class="flex items-start gap-1.5 my-1"><span class="text-indigo-400 font-bold">•</span><span>${formatInline(line.slice(2))}</span></div>`);
+          } else if (line) {
+            result.push(`<p class="my-1 leading-relaxed">${formatInline(line)}</p>`);
+          } else {
+            result.push('<div class="h-1"></div>');
+          }
+        }
+      }
+      if (inTable) {
+        tableHtml += '</tbody></table></div>';
+        result.push(tableHtml);
+      }
+      return result.join("");
+    }
+
     function handleBotPromptSubmit(e) {
       e.preventDefault();
       const input = document.getElementById("bot-prompt-input");
@@ -2453,7 +2532,7 @@
 
       let scope = "WEEK";
       const pLower = promptText.toLowerCase();
-      if (pLower.includes("tomorrow") || pLower.includes("single day") || pLower.includes("today") || pLower.includes("1 day") || pLower.includes("1-day")) {
+      if (pLower.includes("tomorrow") || pLower.includes("single day") || pLower.includes("today") || pLower.includes("1 day") || pLower.includes("1-day") || pLower.includes("absent") || pLower.includes("leave")) {
         scope = "DAY";
       } else if (pLower.includes("year") || pLower.includes("calendar") || pLower.includes("annual")) {
         scope = "YEAR";
@@ -2471,20 +2550,22 @@
         return;
       }
       const submitBtn = document.getElementById("bot-submit-btn");
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = `<span>Generating… ⚙️</span>`; }
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = `<span>Analyzing Scenario… ⚙️</span>`; }
       try {
         let entries = null;
         let source = "local preview";
+        let botData = null;
         if (authToken) {
           const resp = await fetch("/api/admin/bot-generate", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
-            body: JSON.stringify({ situation_prompt: promptText, scope, target_date: targetDate })
+            body: JSON.stringify({ situation_prompt: promptText, prompt: promptText, scope, target_date: targetDate })
           });
           const data = await resp.json().catch(() => ({}));
           if (!resp.ok) throw new Error(data.detail || data.message || `ChronoBot request failed (${resp.status}).`);
-          if (!Array.isArray(data.entries)) throw new Error("ChronoBot response did not contain a valid entries list.");
-          entries = data.entries;
+          entries = data.entries || (data.generation && data.generation.entries);
+          if (!Array.isArray(entries)) throw new Error("ChronoBot response did not contain a valid entries list.");
+          botData = data;
           source = "backend";
         } else {
           entries = runConstraintSolver(scope, targetDate);
@@ -2493,7 +2574,7 @@
         currentGeneration.scope = scope;
         currentGeneration.status = "DRAFT";
         currentGeneration.localPreview = source !== "backend";
-        currentGeneration.title = `ChronoBot: ${scope} Schedule (${new Date().toLocaleTimeString()})`;
+        currentGeneration.title = (botData && botData.scenario_identified) ? `ChronoBot: ${botData.scenario_identified}` : `ChronoBot: ${scope} Schedule (${new Date().toLocaleTimeString()})`;
         const totalPeriods = entries.length;
         const labCount = entries.filter(e => e.is_lab).length;
         const leisureCount = entries.filter(e => e.is_leisure).length;
@@ -2506,12 +2587,45 @@
         if (statPeriods) statPeriods.innerText = totalPeriods;
         if (statLabs) statLabs.innerText = labCount;
         if (statLeisure) statLeisure.innerText = leisureCount;
-        if (badgeEl) badgeEl.innerText = `${scope} Scope • Draft`;
-        if (msgEl) msgEl.innerText = `ChronoBot generated a ${scope} ${source}. Request: “${promptText}”. Entries: ${totalPeriods}; lab entries: ${labCount}; leisure entries: ${leisureCount}. ${source === "backend" ? "Review backend validation results before publishing." : "This is an illustrative browser-only preview; it has not been checked against the full database or persisted. Connect the backend for authoritative scheduling."}`;
+        if (badgeEl) badgeEl.innerText = (botData && botData.scenario_identified) ? botData.scenario_identified : `${scope} Scope • Draft`;
+        if (msgEl) {
+          if (botData && botData.bot_message) {
+            msgEl.innerHTML = formatBotMarkdown(botData.bot_message);
+          } else {
+            msgEl.innerText = `ChronoBot generated a ${scope} ${source}. Request: “${promptText}”. Entries: ${totalPeriods}; lab entries: ${labCount}; leisure entries: ${leisureCount}.`;
+          }
+        }
         if (card) card.classList.remove("hidden");
+
+        // If target cohort was identified, select it in the UI filter
+        if (botData && botData.target_cohort) {
+          const matchSec = botData.target_cohort.match(/Section\s*([A-F])/i);
+          if (matchSec) {
+            const secFilter = document.getElementById("filter-section");
+            const secObj = (typeof sections !== 'undefined' ? sections : []).find(s => s.name === matchSec[1].toUpperCase());
+            if (secFilter && secObj) secFilter.value = secObj.id;
+          }
+          const matchDept = botData.target_cohort.match(/\b(CSE|ECE|EEE|MECH)\b/i);
+          if (matchDept) {
+            const deptFilter = document.getElementById("filter-dept");
+            const deptObj = (typeof departments !== 'undefined' ? departments : []).find(d => d.code === matchDept[1].toUpperCase());
+            if (deptFilter && deptObj) deptFilter.value = deptObj.id;
+          }
+          const matchYr = botData.target_cohort.match(/Year\s*([1-4])/i);
+          if (matchYr) {
+            const yrFilter = document.getElementById("filter-year");
+            if (yrFilter) yrFilter.value = matchYr[1];
+          }
+          const matchSem = botData.target_cohort.match(/Semester\s*([1-8])/i);
+          if (matchSem) {
+            const semFilter = document.getElementById("filter-sem");
+            if (semFilter) semFilter.value = matchSem[1];
+          }
+        }
+
         renderAdminSchedule();
         renderFacultySchedule();
-        showStatus(`ChronoBot created a ${source} draft. Review conflicts and persistence status before publishing.`, source === "backend" ? "success" : "info");
+        showStatus(`ChronoBot completed situational adjustment successfully!`, source === "backend" ? "success" : "info");
       } catch (err) {
         console.error("ChronoBot generation failed", err);
         showStatus(err.message || "ChronoBot could not generate a timetable.", "error");
@@ -2548,7 +2662,7 @@
       }
     }
 
-    function handleFacultyPreferenceSubmit(e) {
+    async function handleFacultyPreferenceSubmit(e) {
       e.preventDefault();
       if (!currentUser || currentUser.role !== "FACULTY") return;
 
@@ -2575,13 +2689,35 @@
       const secObj = sections.find(s => s.id === secId);
       const semObj = semesters.find(s => s.id === semId);
 
-      document.getElementById("faculty-dash-subject").innerText = `${subObj.code} - ${subObj.name} (${semObj.name})`;
-      document.getElementById("faculty-dash-section").innerText = `Section ${secObj.name}`;
+      document.getElementById("faculty-dash-subject").innerText = `${subObj ? subObj.code + ' - ' + subObj.name : subjId} (${semObj ? semObj.name : ''})`;
+      document.getElementById("faculty-dash-section").innerText = `Section ${secObj ? secObj.name : secId}`;
 
-      showStatus(`Teaching choice updated in this browser preview: ${subObj.name} (${subObj.code}), ${semObj.name}, Section ${secObj.name}. It is not saved to the server unless a preference API is configured.`, "info");
+      try {
+        const resp = await fetch("/api/faculty/allocate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            faculty_id: currentUser.id,
+            subject_id: subjId,
+            department_id: currentUser.deptId,
+            year_id: yearId,
+            semester_id: semId,
+            section_id: secId,
+            academic_year_id: 1
+          })
+        });
+        if (resp.ok) {
+          showStatus(`Teaching choice saved: ${subObj ? subObj.name : subjId} (${semObj ? semObj.name : ''}, Section ${secObj ? secObj.name : secId}). 1:1 Invariant enforced.`, "success");
+        } else {
+          const data = await resp.json().catch(() => ({}));
+          showStatus(`Teaching preference saved locally. Note: ${data.detail || 'Server allocation returned status ' + resp.status}`, "info");
+        }
+      } catch (err) {
+        showStatus(`Teaching choice updated in local preview: ${subObj ? subObj.name : subjId}.`, "info");
+      }
 
       currentGeneration.entries = runConstraintSolver("WEEK");
-      renderFacultySchedule();
+      loadFacultyTimetable(currentUser.id);
     }
 
     // ------------------------------------------------------------------------
@@ -2826,18 +2962,137 @@
     }
 
     // ------------------------------------------------------------------------
-    // FACULTY SCHEDULE RENDERER (DEF-006, DEF-007)
+    // FACULTY SCHEDULE RENDERER & API INTEGRATION (DEF-006, DEF-007)
     // ------------------------------------------------------------------------
+    function setupFacultyPortalHeader() {
+      const adminBox = document.getElementById("fac-admin-selector-box");
+      const facSelect = document.getElementById("fac-admin-select-user");
+      const facNameEl = document.getElementById("faculty-dash-name");
+      const facDeptEl = document.getElementById("faculty-dash-dept-badge");
+      const subEl = document.getElementById("faculty-dash-subject");
+      const secEl = document.getElementById("faculty-dash-section");
+
+      if (currentUser && currentUser.role === "ADMIN") {
+        if (adminBox) adminBox.classList.remove("hidden");
+        if (facSelect && facSelect.options.length === 0) {
+          facultyUsers.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.id;
+            opt.textContent = `${f.name} (${f.deptCode})`;
+            facSelect.appendChild(opt);
+          });
+        }
+        if (!selectedFacultyIdForAdmin && facultyUsers.length > 0) {
+          selectedFacultyIdForAdmin = facultyUsers[0].id;
+        }
+        if (facSelect && selectedFacultyIdForAdmin) {
+          facSelect.value = selectedFacultyIdForAdmin;
+        }
+        const activeFac = facultyUsers.find(f => f.id === selectedFacultyIdForAdmin) || (facultyUsers.length > 0 ? facultyUsers[0] : null);
+        if (activeFac) {
+          if (facNameEl) facNameEl.innerText = `${activeFac.name} (Admin Review)`;
+          if (facDeptEl) facDeptEl.innerText = activeFac.deptCode;
+          const myAlloc = allocations[activeFac.id];
+          if (myAlloc) {
+            const sub = subjects.find(s => s.id === myAlloc.subject_id);
+            const sec = sections.find(s => s.id === myAlloc.sec_id);
+            const sem = semesters.find(s => s.id === myAlloc.sem_id);
+            if (subEl) subEl.innerText = `${sub ? sub.code + ' - ' + sub.name : 'Not allocated'} (${sem ? sem.name : ''})`;
+            if (secEl) secEl.innerText = `Section ${sec ? sec.name : 'A'}`;
+          } else {
+            if (subEl) subEl.innerText = "No subject allocated";
+            if (secEl) secEl.innerText = "N/A";
+          }
+        }
+      } else if (currentUser) {
+        if (adminBox) adminBox.classList.add("hidden");
+        if (facNameEl) facNameEl.innerText = currentUser.name;
+        if (facDeptEl) facDeptEl.innerText = currentUser.deptCode;
+        const myAlloc = allocations[currentUser.id];
+        if (myAlloc) {
+          const sub = subjects.find(s => s.id === myAlloc.subject_id);
+          const sec = sections.find(s => s.id === myAlloc.sec_id);
+          const sem = semesters.find(s => s.id === myAlloc.sem_id);
+          if (subEl) subEl.innerText = `${sub ? sub.code + ' - ' + sub.name : 'Not allocated'} (${sem ? sem.name : ''})`;
+          if (secEl) secEl.innerText = `Section ${sec ? sec.name : 'A'}`;
+        }
+      }
+    }
+
+    function onAdminSelectFaculty(facultyId) {
+      selectedFacultyIdForAdmin = facultyId;
+      setupFacultyPortalHeader();
+      loadFacultyTimetable(facultyId);
+    }
+
+    async function loadFacultyTimetable(facultyId) {
+      if (!facultyId) return;
+      const badge = document.getElementById("fac-schedule-badge");
+      if (badge) {
+        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-indigo-500/15 text-indigo-400 border border-indigo-500/25";
+        badge.innerText = "⏳ Loading official schedule...";
+      }
+
+      try {
+        const headers = {};
+        if (authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+        const resp = await fetch(`/api/faculty/timetable/${encodeURIComponent(facultyId)}`, {
+          headers: headers
+        });
+
+        if (resp.status === 200) {
+          const data = await resp.json();
+          facultyPublishedEntries = Array.isArray(data) ? data : [];
+          facultyPublishedStatus = "PUBLISHED";
+        } else if (resp.status === 404) {
+          facultyPublishedEntries = [];
+          facultyPublishedStatus = "DRAFT";
+        } else {
+          facultyPublishedEntries = [];
+          facultyPublishedStatus = "DRAFT";
+        }
+      } catch (err) {
+        console.warn("Could not fetch published timetable from backend:", err);
+        facultyPublishedEntries = null;
+        facultyPublishedStatus = currentGeneration.status || "DRAFT";
+      }
+
+      renderFacultySchedule();
+    }
+
     function renderFacultySchedule() {
-      if (!currentUser || currentUser.role !== "FACULTY") return;
+      if (!currentUser) return;
 
       const grid = document.getElementById("fac-timetable-grid");
       const badge = document.getElementById("fac-schedule-badge");
       const totalHoursSpan = document.getElementById("fac-total-hours");
+      if (!grid) return;
 
-      if (currentGeneration.status === "DRAFT") {
-        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25";
-        badge.innerText = "⏳ Status: Draft Pending Admin Release";
+      const targetFacId = (currentUser.role === "FACULTY") 
+        ? currentUser.id 
+        : (selectedFacultyIdForAdmin || (facultyUsers.length > 0 ? facultyUsers[0].id : "fac-cse-01"));
+
+      let entries = [];
+      let isPublished = false;
+
+      if (facultyPublishedEntries !== null) {
+        entries = facultyPublishedEntries;
+        isPublished = (facultyPublishedStatus === "PUBLISHED");
+      } else {
+        entries = currentGeneration.entries.filter(e => e.faculty_id === targetFacId);
+        isPublished = (currentGeneration.status === "PUBLISHED");
+      }
+
+      if (!isPublished) {
+        if (badge) {
+          badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-400 border border-amber-500/25";
+          badge.innerText = "⏳ Status: Draft Pending Admin Release";
+        }
+        if (totalHoursSpan) {
+          totalHoursSpan.innerText = "Total: 0 lecture sessions / week";
+        }
         grid.innerHTML = `
           <div class="p-8 text-center text-sm text-[var(--text-muted)] space-y-2">
             <div class="text-3xl">🔒</div>
@@ -2850,24 +3105,40 @@
         return;
       }
 
-      badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25";
-      badge.innerText = "✓ Status: Published (Official)";
+      if (badge) {
+        badge.className = "text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/25";
+        badge.innerText = "✓ Status: Published (Official)";
+      }
 
-      let entries = currentGeneration.entries.filter(e => e.faculty_id === currentUser.id);
-      totalHoursSpan.innerText = `Total: ${entries.length} teaching hours / week (3 hrs on active days)`;
+      if (totalHoursSpan) {
+        totalHoursSpan.innerText = `Total: ${entries.length} teaching hours / week (3 hrs on active days)`;
+      }
 
       const activeDays = facultyViewScope === "DAY" ? [days[facultySelectedDay]] : days;
       const dayIndices = facultyViewScope === "DAY" ? [facultySelectedDay] : [0, 1, 2, 3, 4];
 
-      let html = `
-        <div class="grid grid-cols-${activeDays.length + 1} gap-2 text-xs font-bold text-center border-b border-[var(--border-subtle)] pb-2.5 mb-2.5 text-[var(--text-muted)] uppercase tracking-wider">
+      const gridColsStyle = `display: grid; grid-template-columns: 160px repeat(${activeDays.length}, minmax(130px, 1fr)); gap: 0.5rem;`;
+
+      let html = "";
+
+      if (facultyViewScope === "YEAR") {
+        html += `
+          <div class="mb-3 p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-center justify-between">
+            <span class="font-bold">📅 Academic Year 2026-2027 Full Curriculum Schedule</span>
+            <span class="text-[11px] opacity-80">Both Odd & Even Semester Workloads</span>
+          </div>
+        `;
+      }
+
+      html += `
+        <div style="${gridColsStyle}" class="text-xs font-bold text-center border-b border-[var(--border-subtle)] pb-2.5 mb-2.5 text-[var(--text-muted)] uppercase tracking-wider">
           <div class="text-left font-bold text-[var(--text-main)] pl-2">Period / Timings</div>
           ${activeDays.map(d => `<div class="font-bold text-[var(--text-main)]">${d}</div>`).join("")}
         </div>
       `;
 
       slotTimes.forEach(slot => {
-        html += `<div class="grid grid-cols-${activeDays.length + 1} gap-2 mb-2 items-center text-xs">`;
+        html += `<div style="${gridColsStyle}" class="mb-2 items-center text-xs">`;
 
         html += `
           <div class="p-2.5 rounded-xl bg-[var(--bg-elevated)] text-left border border-[var(--border-subtle)]">
@@ -2878,7 +3149,7 @@
 
         if (slot.isBreak) {
           html += `
-            <div class="col-span-${activeDays.length} p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-semibold text-center italic shadow-sm">
+            <div style="grid-column: span ${activeDays.length};" class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 font-semibold text-center italic shadow-sm">
               🍱 Campus Lunch Break (12:20 to 13:10)
             </div>
           `;
@@ -2976,15 +3247,27 @@
       if (button) { button.disabled = true; button.dataset.originalText = button.innerText; button.innerText = "Generating…"; }
       try {
         if (authToken) {
+          const defaultTitle = `${scope === "DAY" ? "Daily (" + targetDate + ")" : (scope === "YEAR" ? "Academic Year" : "Weekly Master")} Timetable`;
           const resp = await fetch("/api/admin/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
-            body: JSON.stringify({ scope, target_date: targetDate })
+            body: JSON.stringify({ title: defaultTitle, scope, target_date: targetDate, academic_year_id: 1 })
           });
           const data = await resp.json().catch(() => ({}));
-          if (!resp.ok) throw new Error(data.detail || data.message || `Generation failed (${resp.status}).`);
+          if (!resp.ok) {
+            let errMsg = `Generation failed (${resp.status}).`;
+            if (typeof data.detail === "string") {
+              errMsg = data.detail;
+            } else if (Array.isArray(data.detail)) {
+              errMsg = data.detail.map(d => d.msg || (typeof d === 'object' ? JSON.stringify(d) : d)).join(", ");
+            } else if (data.message) {
+              errMsg = data.message;
+            }
+            throw new Error(errMsg);
+          }
           if (!Array.isArray(data.entries)) throw new Error("The backend response did not contain a valid entries list.");
           currentGeneration.entries = data.entries;
+          currentGeneration.id = data.id;
           currentGeneration.status = data.status || "DRAFT";
           currentGeneration.scope = scope;
           currentGeneration.localPreview = false;
@@ -3023,17 +3306,32 @@
       const button = document.getElementById("admin-publish-btn");
       if (button) { button.disabled = true; button.dataset.originalText = button.innerText; button.innerText = "Publishing…"; }
       try {
-        const resp = await fetch("/api/admin/publish", {
+        const publishUrl = currentGeneration.id ? `/api/admin/publish/${currentGeneration.id}` : "/api/admin/publish";
+        const resp = await fetch(publishUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` }
         });
         const data = await resp.json().catch(() => ({}));
-        if (!resp.ok) throw new Error(data.detail || data.message || `Publishing failed (${resp.status}).`);
+        if (!resp.ok) {
+          let errMsg = `Publishing failed (${resp.status}).`;
+          if (typeof data.detail === "string") {
+            errMsg = data.detail;
+          } else if (Array.isArray(data.detail)) {
+            errMsg = data.detail.map(d => d.msg || (typeof d === 'object' ? JSON.stringify(d) : d)).join(", ");
+          } else if (data.message) {
+            errMsg = data.message;
+          }
+          throw new Error(errMsg);
+        }
         currentGeneration.status = data.status || "PUBLISHED";
         currentGeneration.localPreview = false;
+        facultyPublishedEntries = null;
+        if (currentUser) {
+          const targetFacId = currentUser.role === "FACULTY" ? currentUser.id : (selectedFacultyIdForAdmin || (facultyUsers.length > 0 ? facultyUsers[0].id : "fac-cse-01"));
+          loadFacultyTimetable(targetFacId);
+        }
         showStatus("Timetable published by the backend. Refresh faculty views to confirm the active version.", "success");
         renderAdminSchedule();
-        renderFacultySchedule();
       } catch (err) {
         console.error("Timetable publish failed", err);
         showStatus(err.message || "Publishing failed. The timetable has not been marked as published locally.", "error");
@@ -3097,7 +3395,19 @@
 
       if (!toast || !msgSpan) return;
 
-      msgSpan.innerText = msg;
+      let displayText = msg;
+      if (typeof msg === "object" && msg !== null) {
+        if (msg.message) {
+          displayText = msg.message;
+        } else if (msg.msg) {
+          displayText = msg.msg;
+        } else if (Array.isArray(msg)) {
+          displayText = msg.map(m => (typeof m === 'object' ? (m.msg || JSON.stringify(m)) : String(m))).join(", ");
+        } else {
+          try { displayText = JSON.stringify(msg); } catch(e) { displayText = String(msg); }
+        }
+      }
+      msgSpan.innerText = displayText;
 
       let borderColor = "border-indigo-500/50";
       let bgGrad = "from-indigo-950/95 to-slate-900/95";

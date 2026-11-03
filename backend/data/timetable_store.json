@@ -1,8 +1,8 @@
 {
   "is_custom_data": false,
   "custom_users": {
-    "u-faculty-07ce203d": {
-      "id": "u-faculty-07ce203d",
+    "u-faculty-1cc3b5b2": {
+      "id": "u-faculty-1cc3b5b2",
       "email": "sarah.connor@univ.edu",
       "full_name": "Dr. Sarah Connor",
       "role": "FACULTY",
@@ -10,8 +10,8 @@
       "department_code": "CSE",
       "password": "pbkdf2:13bf13e29d1b27c2a54acad7c3a74bb55bd93d0133552b8ac2ffb4bffbc78a22"
     },
-    "u-admin-821a33b3": {
-      "id": "u-admin-821a33b3",
+    "u-admin-0546d3c7": {
+      "id": "u-admin-0546d3c7",
       "email": "admin.assistant@university.edu",
       "full_name": "Marcus Wright",
       "role": "ADMIN",
@@ -24,16 +24,16 @@
     "alloc-dc2826a1": {
       "id": "alloc-dc2826a1",
       "faculty_id": "fac-cse-01",
-      "subject_id": "sub-cs-101",
+      "subject_id": "sub-cs-201",
       "department_id": 1,
       "department_code": "CSE",
-      "year_id": 1,
-      "semester_id": 1,
-      "section_id": 2,
-      "section_name": "B",
+      "year_id": 2,
+      "semester_id": 3,
+      "section_id": 1,
+      "section_name": "A",
       "academic_year_id": 1,
-      "allocated_by": "ADMIN",
-      "created_at": "2026-10-24 12:20:44.091380+00:00"
+      "allocated_by": "FACULTY",
+      "created_at": "2026-11-02 19:15:07.698249+00:00"
     },
     "alloc-60299f78": {
       "id": "alloc-60299f78",

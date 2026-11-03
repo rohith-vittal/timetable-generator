@@ -232,4 +232,64 @@ def test_faculty_cannot_access_admin_endpoint():
     assert res.status_code == 403
     assert "Administrative privileges required" in res.json()["detail"]
 
+def test_chronobot_absent_faculty_dynamic_rescheduling():
+    """
+    Test that when an administrator informs ChronoBot that a faculty member is absent on a day,
+    ChronoBot dynamically adjusts the schedule for the targeted section, year, and semester:
+      1. Replaces the absent faculty member with an eligible substitute.
+      2. Strictly preserves the 3 hours/day workload cap for all teachers.
+      3. Guarantees zero blank slots (all 6 instructional periods filled).
+      4. Avoids any double bookings or collisions.
+    """
+    # Ensure Dr. Grace Hopper is allocated to Section A, Year 1, Semester 1
+    client.post("/api/admin/allocate", json={
+        "faculty_id": "fac-cse-01",
+        "subject_id": "sub-cs-101",
+        "department_id": 1,
+        "year_id": 1,
+        "semester_id": 1,
+        "section_id": 1,
+        "academic_year_id": 1,
+        "allocated_by": "ADMIN",
+    })
+
+    prompt = "Dr. Grace Hopper is absent today. Adjust timetable for Year 1, Semester 1, Section A."
+    res = client.post("/api/admin/bot-generate", json={
+        "prompt": prompt,
+        "target_date": "2026-10-19"
+    })
+    assert res.status_code == 201
+    data = res.json()
+    assert "ChronoBot" in data["bot_message"]
+    assert "Dr. Grace Hopper" in data["bot_message"]
+    assert "Section A" in data["bot_message"]
+    assert data["scope"] == "DAY"
+    assert "entries" in data
+    assert len(data["entries"]) > 0
+
+    # Ensure Dr. Grace Hopper (fac-cse-01) is NOT assigned to any class on this day
+    hopper_entries = [e for e in data["entries"] if e["faculty_id"] == "fac-cse-01"]
+    assert len(hopper_entries) == 0, "Absent faculty member must not be assigned to any periods!"
+
+    # Check Section A Year 1 Semester 1 periods
+    sec_a_entries = [
+        e for e in data["entries"]
+        if e["section_name"] == "A" and e["year_id"] == 1 and e["semester_id"] == 1
+    ]
+    assert len(sec_a_entries) == 6, f"Section A must have exactly 6 scheduled periods (zero blank slots), got {len(sec_a_entries)}"
+
+    # Check that a substitute was allocated for the periods Dr. Grace Hopper originally taught
+    substitute_entries = [e for e in sec_a_entries if "Substitute" in e["faculty_name"]]
+    assert len(substitute_entries) > 0, "At least one substitute must be allocated for Section A"
+
+    # Verify no active teacher exceeds 3 hours
+    faculty_hours = {}
+    for e in data["entries"]:
+        if e["faculty_id"] and not e["is_leisure"] and not e["faculty_id"].startswith("fac-mentor") and not e["faculty_id"].startswith("sub-"):
+            faculty_hours[e["faculty_id"]] = faculty_hours.get(e["faculty_id"], 0) + 1
+
+    for f_id, hours in faculty_hours.items():
+        assert hours <= 3, f"Faculty {f_id} has {hours} hours on this day, exceeding 3h daily load limit!"
+
+
 

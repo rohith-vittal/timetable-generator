@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, status
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.schemas import (
     FacultyAllocationCreate,
@@ -11,6 +11,14 @@ from app.models import ScheduleScope, ScheduleStatus
 from app.storage import db
 
 router = APIRouter(prefix="/api/faculty", tags=["Faculty Interface"])
+
+def _get_created_at_key(gen):
+    dt = getattr(gen, "created_at", None)
+    if dt is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 @router.post(
     "/allocate",
@@ -130,7 +138,7 @@ def get_faculty_timetable(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No published timetable is currently available. Please check back once the administration publishes the schedule."
             )
-        published_gens.sort(key=lambda g: g.created_at, reverse=True)
+        published_gens.sort(key=_get_created_at_key, reverse=True)
         target_gen = published_gens[0]
 
     # Filter entries strictly belonging to this faculty member
