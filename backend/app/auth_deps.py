@@ -17,9 +17,9 @@ def get_current_user(authorization: Optional[str] = Header(None)) -> User:
     if user:
         return user
     
-    if "admin" in token.lower() or token == "dev-admin-token-xyz":
+    if token in ("tok-admin-valid-session", "dev-admin-token-xyz"):
         return db.users.get("u-admin-001")
-    if "faculty" in token.lower():
+    if token == "tok-faculty-valid-session":
         return db.users.get("fac-cse-01")
         
     raise HTTPException(

@@ -31,6 +31,12 @@ def register(payload: RegisterRequest):
 
     token = f"tok-{new_user.role.lower()}-{uuid.uuid4().hex[:12]}"
     db.active_sessions[token] = new_user
+    user_dept_id = payload.department_id or 1
+    for d in db.departments.values():
+        if d.code == new_user.department_code or d.name == new_user.department:
+            user_dept_id = d.id
+            break
+
     return LoginResponse(
         token=token,
         access_token=token,
@@ -42,6 +48,7 @@ def register(payload: RegisterRequest):
             role=new_user.role,
             department=new_user.department,
             department_code=new_user.department_code,
+            department_id=user_dept_id,
         )
     )
 
@@ -76,6 +83,12 @@ def login(payload: LoginRequest):
     token = f"tok-{matched_user.role.lower()}-{uuid.uuid4().hex[:12]}"
     db.active_sessions[token] = matched_user
 
+    user_dept_id = None
+    for d in db.departments.values():
+        if d.code == matched_user.department_code or d.name == matched_user.department:
+            user_dept_id = d.id
+            break
+
     return LoginResponse(
         token=token,
         access_token=token,
@@ -87,6 +100,7 @@ def login(payload: LoginRequest):
             role=matched_user.role,
             department=matched_user.department,
             department_code=matched_user.department_code,
+            department_id=user_dept_id,
         )
     )
 

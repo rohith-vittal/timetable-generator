@@ -260,3 +260,71 @@ def test_year_generation_scope(test_db):
     )
     assert len(entries) > 0
     assert all(e.calendar_date is not None for e in entries)
+
+def test_each_day_in_week_has_different_schedule(test_db):
+    """
+    User Requirement:
+      In a week each day must have a different schedule.
+      Verifies that Monday, Tuesday, Wednesday, Thursday, and Friday all have distinct schedule signatures.
+    """
+    solver = TimetableSolver(
+        subjects=list(test_db.subjects.values()),
+        allocations=list(test_db.allocations.values()),
+        time_slots=list(test_db.time_slots.values()),
+        classrooms=list(test_db.classrooms.values()),
+        users=test_db.users,
+        semesters=test_db.semesters,
+        years=test_db.years,
+        departments=test_db.departments,
+        sections=test_db.sections,
+    )
+    entries = solver.solve(generation_id="gen-test-diff-days", scope=ScheduleScope.WEEK)
+    cohort_entries = {}
+    for e in entries:
+        key = (e.department_id, e.semester_id, e.section_id)
+        cohort_entries.setdefault(key, []).append(e)
+
+    for cohort_key, items in cohort_entries.items():
+        day_patterns = {}
+        for d in range(5):
+            d_items = sorted([e for e in items if e.day_of_week == d], key=lambda x: x.slot_index)
+            pattern = tuple((e.slot_index, e.is_lab, e.is_leisure, e.faculty_id) for e in d_items)
+            day_patterns[d] = pattern
+        unique_days = len(set(day_patterns.values()))
+        assert unique_days == 5, f"Cohort {cohort_key} expected 5 unique daily schedules, got {unique_days}"
+
+def test_faculty_teaches_section_at_most_once_per_day_unless_lab(test_db):
+    """
+    User Requirement:
+      A faculty must be teaching a section only once unless it is 2hrs lab or 3hrs lab.
+    """
+    solver = TimetableSolver(
+        subjects=list(test_db.subjects.values()),
+        allocations=list(test_db.allocations.values()),
+        time_slots=list(test_db.time_slots.values()),
+        classrooms=list(test_db.classrooms.values()),
+        users=test_db.users,
+        semesters=test_db.semesters,
+        years=test_db.years,
+        departments=test_db.departments,
+        sections=test_db.sections,
+    )
+    entries = solver.solve(generation_id="gen-test-max-once", scope=ScheduleScope.WEEK)
+    cohort_entries = {}
+    for e in entries:
+        key = (e.department_id, e.semester_id, e.section_id)
+        cohort_entries.setdefault(key, []).append(e)
+
+    for cohort_key, items in cohort_entries.items():
+        for d in range(5):
+            d_items = [e for e in items if e.day_of_week == d]
+            fac_map = {}
+            for e in d_items:
+                if not e.is_leisure and e.faculty_id != "fac-mentor":
+                    fac_map.setdefault(e.faculty_id, []).append(e)
+            for f_id, f_entries in fac_map.items():
+                labs = [e for e in f_entries if e.is_lab]
+                theories = [e for e in f_entries if not e.is_lab]
+                if labs:
+                    assert len(labs) in (2, 3), f"Cohort {cohort_key} Day {d} faculty {f_id} has lab of length {len(labs)}"
+                assert len(theories) <= 1, f"Cohort {cohort_key} Day {d} faculty {f_id} teaches theory {len(theories)} times (max 1 allowed)!"

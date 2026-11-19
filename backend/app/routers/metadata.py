@@ -11,17 +11,26 @@ def get_metadata() -> Dict[str, Any]:
     Returns lookup data for frontend form selectors and dashboards,
     including Departments (CSE, ECE, EEE, MECH) and 6 Sections (A-F).
     """
-    faculty_users = [
-        {
-            "id": u.id,
-            "name": u.full_name,
-            "email": u.email,
-            "department": u.department,
-            "department_code": u.department_code,
-        }
-        for u in db.users.values()
-        if u.role == UserRole.FACULTY
-    ]
+    faculty_users = []
+    for u in db.users.values():
+        if u.role == UserRole.FACULTY or str(u.role).upper() == "FACULTY":
+            dept_id = 1
+            for d in db.departments.values():
+                if d.code == u.department_code or d.name == u.department:
+                    dept_id = d.id
+                    break
+            faculty_users.append({
+                "id": u.id,
+                "name": u.full_name,
+                "full_name": u.full_name,
+                "email": u.email,
+                "department": u.department,
+                "department_code": u.department_code,
+                "department_id": dept_id,
+                "deptId": dept_id,
+                "deptCode": u.department_code,
+                "role": "FACULTY",
+            })
 
     allocations_list = []
     for a in db.allocations.values():

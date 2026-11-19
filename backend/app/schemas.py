@@ -20,6 +20,7 @@ class UserProfile(BaseModel):
     role: UserRole
     department: str
     department_code: str
+    department_id: Optional[int] = None
 
 class LoginResponse(BaseModel):
     token: str

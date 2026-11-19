@@ -606,50 +606,6 @@
             </button>
           </form>
 
-          <!-- Demo-account shortcuts: authentication is always checked by the backend -->
-          <div class="pt-4 border-t border-[var(--border-subtle)] space-y-2.5">
-            <div class="text-[11px] font-bold uppercase tracking-wider text-[var(--text-muted)]">Demo account shortcuts
-              (backend accounts required):</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <button onclick="quickLogin('admin@university.edu', '', 'ADMIN')"
-                class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-indigo-500/40 text-left transition group">
-                <div class="flex items-center justify-between">
-                  <strong class="text-[var(--text-main)] group-hover:text-indigo-400 transition">🛡️ Dean Alan
-                    Turing</strong>
-                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300">ADMIN</span>
-                </div>
-                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">Master Controls & ChronoBot</span>
-              </button>
-              <button onclick="quickLogin('grace.hopper@univ.edu', '', 'FACULTY')"
-                class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-emerald-500/40 text-left transition group">
-                <div class="flex items-center justify-between">
-                  <strong class="text-[var(--text-main)] group-hover:text-emerald-400 transition">👩‍🏫 Dr. Grace
-                    Hopper</strong>
-                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300">CSE</span>
-                </div>
-                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">CS101 Intro to Computing</span>
-              </button>
-              <button onclick="quickLogin('claude.shannon@univ.edu', '', 'FACULTY')"
-                class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-cyan-500/40 text-left transition group">
-                <div class="flex items-center justify-between">
-                  <strong class="text-[var(--text-main)] group-hover:text-cyan-400 transition">📡 Dr. Claude
-                    Shannon</strong>
-                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300">ECE</span>
-                </div>
-                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">EC101 Basic Electronics</span>
-              </button>
-              <button onclick="quickLogin('nikola.tesla@univ.edu', '', 'FACULTY')"
-                class="p-2.5 rounded-xl bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-amber-500/40 text-left transition group">
-                <div class="flex items-center justify-between">
-                  <strong class="text-[var(--text-main)] group-hover:text-amber-400 transition">⚡ Dr. Nikola
-                    Tesla</strong>
-                  <span class="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">EEE</span>
-                </div>
-                <span class="text-[11px] text-[var(--text-muted)] block mt-0.5">EE101 Circuit Theory</span>
-              </button>
-            </div>
-          </div>
-
           <!-- Bottom Switch Prompt -->
           <div class="pt-4 border-t border-[var(--border-subtle)] text-center text-sm">
             <span class="text-[var(--text-muted)]">If no account?</span>
@@ -1825,110 +1781,134 @@
         const [T0, T1, T2] = theoryTeachers;
         const [L0, L1, L2] = labInstructors;
 
-        // Exactly 2 leisure days per week
-        const leisureDays = [(gIdx % 5), ((gIdx + 2) % 5)];
+        const dailyMatrices = {
+          0: { // Monday: Morning Theory (P1-3), Afternoon 3h Lab (P4-6)
+            1: [[T0, false, 1], [T1, false, 1], [T2, false, 1]],
+            2: [[T2, false, 1], [T0, false, 1], [T1, false, 1]],
+            3: [[T1, false, 1], [T2, false, 1], [T0, false, 1]],
+            4: [[L0, true, 3], [L1, true, 3], [L2, true, 3]],
+            5: [[L0, true, 3], [L1, true, 3], [L2, true, 3]],
+            6: [[L0, true, 3], [L1, true, 3], [L2, true, 3]],
+          },
+          1: { // Tuesday: Morning Theory/Class (P1-3), Afternoon 2h Lab (P4-5), Period 6 Leisure
+            1: [[T0, false, 1], [L0, false, 1], [T1, false, 1]],
+            2: [[T1, false, 1], [T0, false, 1], [L1, false, 1]],
+            3: [[L2, false, 1], [T1, false, 1], [T0, false, 1]],
+            4: [[L0, true, 2], [L1, true, 2], [L2, true, 2]],
+            5: [[L0, true, 2], [L1, true, 2], [L2, true, 2]],
+            6: [[null, false, 0], [null, false, 0], [null, false, 0]],
+          },
+          2: { // Wednesday: Morning 3h Lab (P1-3), Afternoon Theory (P4-6) [Inverted structure]
+            1: [[L1, true, 3], [L2, true, 3], [L0, true, 3]],
+            2: [[L1, true, 3], [L2, true, 3], [L0, true, 3]],
+            3: [[L1, true, 3], [L2, true, 3], [L0, true, 3]],
+            4: [[T1, false, 1], [T2, false, 1], [T0, false, 1]],
+            5: [[T0, false, 1], [T1, false, 1], [T2, false, 1]],
+            6: [[T2, false, 1], [T0, false, 1], [T1, false, 1]],
+          },
+          3: { // Thursday: Morning 2h Lab (P1-2) + Class (P3), Afternoon Theory (P4-5), Period 6 Leisure
+            1: [[L2, true, 2], [L0, true, 2], [L1, true, 2]],
+            2: [[L2, true, 2], [L0, true, 2], [L1, true, 2]],
+            3: [[T2, false, 1], [L2, false, 1], [T0, false, 1]],
+            4: [[T0, false, 1], [T2, false, 1], [L0, false, 1]],
+            5: [[L1, false, 1], [T0, false, 1], [T2, false, 1]],
+            6: [[null, false, 0], [null, false, 0], [null, false, 0]],
+          },
+          4: { // Friday: Morning Theory (P1-3, rotated sequence), Afternoon 3h Lab (P4-6)
+            1: [[T2, false, 1], [T0, false, 1], [T1, false, 1]],
+            2: [[T1, false, 1], [T2, false, 1], [T0, false, 1]],
+            3: [[T0, false, 1], [T1, false, 1], [T2, false, 1]],
+            4: [[L0, true, 3], [L1, true, 3], [L2, true, 3]],
+            5: [[L0, true, 3], [L1, true, 3], [L2, true, 3]],
+            6: [[L0, true, 3], [L1, true, 3], [L2, true, 3]],
+          }
+        };
+
+        const slotTimesLocal = [
+          { index: 1, start: "09:20", end: "10:20" },
+          { index: 2, start: "10:20", end: "11:20" },
+          { index: 3, start: "11:20", end: "12:20" },
+          { index: 4, start: "13:10", end: "14:10" },
+          { index: 5, start: "14:10", end: "15:10" },
+          { index: 6, start: "15:10", end: "16:10" },
+        ];
 
         for (let d = 0; d < 5; d++) {
           const dayName = days[d];
-          const isLeisureDay = leisureDays.includes(d);
+          const matrix = dailyMatrices[d];
 
-          if (isLeisureDay) {
-            const isFirstLeisure = (d === leisureDays[0]);
-            const activeTheoryA = isFirstLeisure ? T0 : T1;
-            const activeTheoryB = isFirstLeisure ? T1 : T2;
-
-            // Period 6: Leisure
+          slotTimesLocal.forEach(st => {
+            const assignments = matrix[st.index];
             group.forEach((c, cIdx) => {
-              weeklyEntries.push({
-                id: `ent-${entryId++}`,
-                day_of_week: d,
-                day_name: dayName,
-                slot_index: 6,
-                start_time: "15:10",
-                end_time: "16:10",
-                department_id: c.dept.id,
-                department_code: c.dept.code,
-                section_id: c.section.id,
-                section_name: c.section.name,
-                subject_id: "leisure-slot",
-                subject_code: "LEISURE",
-                subject_name: "Library / Physical Recreation / Sports",
-                faculty_id: "fac-mentor",
-                faculty_name: "Faculty Mentor",
-                semester_id: c.sem.id,
-                semester_name: c.sem.name,
-                year_id: c.year.id,
-                year_name: c.year.name,
-                classroom_id: gRooms[cIdx].lecture.id,
-                classroom_name: "Sports Ground / Library",
-                is_lab: false,
-                is_leisure: true,
-              });
-            });
-
-            // Periods 4 & 5 (2-hr Lab)
-            group.forEach((c, cIdx) => {
-              const labInst = [L0, L1, L2][cIdx];
-              const labRoom = gRooms[cIdx].lab;
-              [4, 5].forEach(sIdx => {
+              const [fac, isLab, duration] = assignments[cIdx];
+              if (fac === null) {
+                // Period 6 Leisure
                 weeklyEntries.push({
                   id: `ent-${entryId++}`,
                   day_of_week: d,
                   day_name: dayName,
-                  slot_index: sIdx,
-                  start_time: sIdx === 4 ? "13:10" : "14:10",
-                  end_time: sIdx === 4 ? "14:10" : "15:10",
+                  slot_index: st.index,
+                  start_time: st.start,
+                  end_time: st.end,
+                  department_id: c.dept.id,
+                  department_code: c.dept.code,
+                  section_id: c.section.id,
+                  section_name: c.section.name,
+                  subject_id: "leisure-slot",
+                  subject_code: "LEISURE",
+                  subject_name: "Physical Education, Sports & Campus Library",
+                  faculty_id: "fac-mentor",
+                  faculty_name: "Faculty Mentor",
+                  semester_id: c.sem.id,
+                  semester_name: c.sem.name,
+                  year_id: c.year.id,
+                  year_name: c.year.name,
+                  classroom_id: gRooms[cIdx].lecture.id,
+                  classroom_name: "Sports Ground / Central Library",
+                  is_lab: false,
+                  is_leisure: true,
+                });
+              } else if (isLab) {
+                weeklyEntries.push({
+                  id: `ent-${entryId++}`,
+                  day_of_week: d,
+                  day_name: dayName,
+                  slot_index: st.index,
+                  start_time: st.start,
+                  end_time: st.end,
                   department_id: c.dept.id,
                   department_code: c.dept.code,
                   section_id: c.section.id,
                   section_name: c.section.name,
                   subject_id: `${c.subject.id}-lab`,
                   subject_code: `${c.subject.code}L`,
-                  subject_name: `${c.subject.name} Practical Lab`,
-                  faculty_id: labInst.id,
-                  faculty_name: labInst.name,
+                  subject_name: `${c.subject.name} Practical Lab (${duration}h)`,
+                  faculty_id: fac.id,
+                  faculty_name: fac.name,
                   semester_id: c.sem.id,
                   semester_name: c.sem.name,
                   year_id: c.year.id,
                   year_name: c.year.name,
-                  classroom_id: labRoom.id,
-                  classroom_name: labRoom.name,
+                  classroom_id: gRooms[cIdx].lab.id,
+                  classroom_name: gRooms[cIdx].lab.name,
                   is_lab: true,
                   is_leisure: false,
                 });
-              });
-            });
-
-            // Morning Periods 1, 2, 3 (Classes)
-            const matrix = [
-              [L0, activeTheoryA, activeTheoryB],
-              [activeTheoryA, L1, activeTheoryB],
-              [activeTheoryA, activeTheoryB, L2],
-            ];
-
-            const slotMeta = [
-              { index: 1, start: "09:20", end: "10:20" },
-              { index: 2, start: "10:20", end: "11:20" },
-              { index: 3, start: "11:20", end: "12:20" },
-            ];
-
-            slotMeta.forEach((sm, sIdx) => {
-              group.forEach((c, cIdx) => {
-                const fac = matrix[sIdx][cIdx];
+              } else {
                 weeklyEntries.push({
                   id: `ent-${entryId++}`,
                   day_of_week: d,
                   day_name: dayName,
-                  slot_index: sm.index,
-                  start_time: sm.start,
-                  end_time: sm.end,
+                  slot_index: st.index,
+                  start_time: st.start,
+                  end_time: st.end,
                   department_id: c.dept.id,
                   department_code: c.dept.code,
                   section_id: c.section.id,
                   section_name: c.section.name,
                   subject_id: c.subject.id,
                   subject_code: c.subject.code,
-                  subject_name: c.subject.name,
+                  subject_name: `${c.subject.name} (Theory 1h)`,
                   faculty_id: fac.id,
                   faculty_name: fac.name,
                   semester_id: c.sem.id,
@@ -1940,83 +1920,10 @@
                   is_lab: false,
                   is_leisure: false,
                 });
-              });
+              }
             });
-
-          } else {
-            // Standard day: Morning classes (Periods 1-3), Afternoon 3-hr lab (Periods 4-6)
-            const mMeta = [
-              { index: 1, start: "09:20", end: "10:20" },
-              { index: 2, start: "10:20", end: "11:20" },
-              { index: 3, start: "11:20", end: "12:20" },
-            ];
-            const aMeta = [
-              { index: 4, start: "13:10", end: "14:10" },
-              { index: 5, start: "14:10", end: "15:10" },
-              { index: 6, start: "15:10", end: "16:10" },
-            ];
-
-            group.forEach((c, cIdx) => {
-              const theoryFac = [T0, T1, T2][cIdx];
-              const labInst = [L0, L1, L2][cIdx];
-
-              mMeta.forEach(sm => {
-                weeklyEntries.push({
-                  id: `ent-${entryId++}`,
-                  day_of_week: d,
-                  day_name: dayName,
-                  slot_index: sm.index,
-                  start_time: sm.start,
-                  end_time: sm.end,
-                  department_id: c.dept.id,
-                  department_code: c.dept.code,
-                  section_id: c.section.id,
-                  section_name: c.section.name,
-                  subject_id: c.subject.id,
-                  subject_code: c.subject.code,
-                  subject_name: c.subject.name,
-                  faculty_id: theoryFac.id,
-                  faculty_name: theoryFac.name,
-                  semester_id: c.sem.id,
-                  semester_name: c.sem.name,
-                  year_id: c.year.id,
-                  year_name: c.year.name,
-                  classroom_id: gRooms[cIdx].lecture.id,
-                  classroom_name: gRooms[cIdx].lecture.name,
-                  is_lab: false,
-                  is_leisure: false,
-                });
-              });
-
-              aMeta.forEach(sm => {
-                weeklyEntries.push({
-                  id: `ent-${entryId++}`,
-                  day_of_week: d,
-                  day_name: dayName,
-                  slot_index: sm.index,
-                  start_time: sm.start,
-                  end_time: sm.end,
-                  department_id: c.dept.id,
-                  department_code: c.dept.code,
-                  section_id: c.section.id,
-                  section_name: c.section.name,
-                  subject_id: `${c.subject.id}-lab`,
-                  subject_code: `${c.subject.code}L`,
-                  subject_name: `${c.subject.name} Hands-on Lab`,
-                  faculty_id: labInst.id,
-                  faculty_name: labInst.name,
-                  semester_id: c.sem.id,
-                  semester_name: c.sem.name,
-                  year_id: c.year.id,
-                  year_name: c.year.name,
-                  classroom_id: gRooms[cIdx].lab.id,
-                  classroom_name: gRooms[cIdx].lab.name,
-                  is_lab: true,
-                  is_leisure: false,
-                });
-              });
-            });
-          }
+          });
+        }
         }
       });
 
@@ -2082,6 +1989,10 @@
     // NAVIGATION CONTROLLER & PORTAL ROUTE GUARDS
     // ------------------------------------------------------------------------
     function handleNavClick(view) {
+      if (view === "AUTH" && currentUser) {
+        logout();
+        return;
+      }
       if (!currentUser && (view === "ADMIN" || view === "FACULTY")) {
         showStatus(`🔒 Authentication Required: You must sign in or register before entering the ${view === "ADMIN" ? "Admin" : "Faculty"} Portal.`, "warning");
         switchMainView("AUTH");
@@ -2152,8 +2063,10 @@
       } else if (view === "ADMIN" && currentUser && currentUser.role === "ADMIN") {
         if (adminSection) adminSection.classList.remove("hidden");
         if (navAdmin) navAdmin.className = "px-3.5 py-2 rounded-lg font-bold bg-indigo-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
-        renderAllocationsTable();
-        renderAdminSchedule();
+        loadMetadata().then(() => {
+          renderAllocationsTable();
+          renderAdminSchedule();
+        });
       } else if (view === "FACULTY" && currentUser) {
         if (facultySection) facultySection.classList.remove("hidden");
         if (navFaculty) navFaculty.className = "px-3.5 py-2 rounded-lg font-bold bg-emerald-600 text-white shadow transition-all duration-200 flex items-center gap-1.5";
@@ -2271,6 +2184,7 @@
           localStorage.setItem("chrono_token", authToken);
           localStorage.setItem("chrono_user", JSON.stringify(currentUser));
         } catch (e) { }
+        await loadMetadata();
         updateAuthUI();
         showStatus(`Welcome, ${currentUser.name}! Signed in securely as ${currentUser.role}.`, "success");
       } catch (err) {
@@ -2326,6 +2240,7 @@
           localStorage.setItem("chrono_token", authToken);
           localStorage.setItem("chrono_user", JSON.stringify(currentUser));
         } catch (e) { }
+        await loadMetadata();
         updateAuthUI();
         showStatus(`Account created successfully for ${currentUser.name}.`, "success");
       } catch (err) {
@@ -2388,7 +2303,8 @@
       if (dot) dot.className = "h-2 w-2 rounded-full bg-emerald-400 animate-pulse";
       if (authBtn) authBtn.innerText = "Sign Out";
       if (navAuth) {
-        navAuth.innerHTML = `<span>🔐 Switch Account</span>`;
+        navAuth.innerHTML = `<span>🚪 Sign Out</span>`;
+        navAuth.title = "Sign out of your account";
       }
 
       if (currentUser.role === "ADMIN") {
@@ -2726,8 +2642,14 @@
     function onAdminDeptChanged() {
       const deptId = parseInt(document.getElementById("admin-alloc-dept").value);
       const facSelect = document.getElementById("admin-alloc-fac");
-      const filteredFaculty = facultyUsers.filter(f => f.deptId === deptId);
-      facSelect.innerHTML = filteredFaculty.map(f => `<option value="${f.id}">${f.name}</option>`).join("");
+      if (!facSelect) return;
+      const deptObj = departments.find(d => Number(d.id) === deptId);
+      const filteredFaculty = facultyUsers.filter(f => Number(f.deptId) === deptId || (deptObj && f.deptCode === deptObj.code));
+      if (filteredFaculty.length > 0) {
+        facSelect.innerHTML = filteredFaculty.map(f => `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)} (${escapeHtml(f.deptCode || '')})</option>`).join("");
+      } else {
+        facSelect.innerHTML = `<option value="">No faculty registered in this department</option>`;
+      }
       onAdminSemChanged();
     }
 
@@ -2885,7 +2807,11 @@
       if (sFilter) filtered = filtered.filter(e => e.semester_id === parseInt(sFilter));
       if (fFilter) filtered = filtered.filter(e => e.faculty_id === fFilter);
 
-      document.getElementById("admin-stats-summary").innerText = `Displaying ${filtered.length} scheduled periods across filtered criteria. (Zero Blank Slots)`;
+      const theoryCount = filtered.filter(e => !e.is_lab && !e.is_leisure).length;
+      const labCount = filtered.filter(e => e.is_lab).length;
+      const leisureCount = filtered.filter(e => e.is_leisure).length;
+
+      document.getElementById("admin-stats-summary").innerHTML = `Displaying <span class="text-[var(--text-main)] font-bold">${filtered.length}</span> scheduled periods: <span class="text-indigo-300 font-bold">${theoryCount} Theory Classes (1h each)</span> • <span class="text-emerald-300 font-bold">${labCount} Lab Hours (2h/3h practicals)</span> • <span class="text-amber-300 font-bold">${leisureCount} Leisure Periods</span>. (Zero Blank Slots • Academic Regulation Compliant)`;
 
       let html = `
         <div class="grid grid-cols-6 gap-2 text-xs font-bold text-center border-b border-[var(--border-subtle)] pb-2.5 mb-2.5 text-[var(--text-muted)] uppercase tracking-wider">
@@ -2918,14 +2844,16 @@
               html += `<div class="space-y-1.5">`;
               matches.forEach((m, idx) => {
                 let cardStyle = "bg-indigo-950/40 border-indigo-500/40 text-indigo-200 border-l-4 border-l-indigo-500";
-                let typeTag = `<span class="text-[9px] bg-indigo-500/25 text-indigo-300 px-1.5 py-0.2 rounded font-bold">THEORY</span>`;
+                let typeTag = `<span class="text-[9px] bg-indigo-500/25 text-indigo-300 px-1.5 py-0.2 rounded font-bold border border-indigo-500/40">THEORY (1 hr)</span>`;
 
                 if (m.is_lab) {
                   cardStyle = "bg-emerald-950/40 border-emerald-500/40 text-emerald-200 border-l-4 border-l-emerald-500";
-                  typeTag = `<span class="text-[9px] bg-emerald-500/25 text-emerald-300 px-1.5 py-0.2 rounded font-bold">LAB 🔬</span>`;
+                  const labMatches = filtered.filter(e => e.day_of_week === d && e.is_lab && e.section_id === m.section_id && e.subject_code === m.subject_code);
+                  const labDurationStr = (labMatches.length >= 3 || (d === 0 || d === 2 || d === 4)) ? "3 hrs" : "2 hrs";
+                  typeTag = `<span class="text-[9px] bg-emerald-500/25 text-emerald-300 px-1.5 py-0.2 rounded font-bold border border-emerald-500/40">LAB (${labDurationStr}) 🔬</span>`;
                 } else if (m.is_leisure) {
                   cardStyle = "bg-amber-950/40 border-amber-500/40 text-amber-200 border-l-4 border-l-amber-500";
-                  typeTag = `<span class="text-[9px] bg-amber-500/25 text-amber-300 px-1.5 py-0.2 rounded font-bold">LEISURE ⚽</span>`;
+                  typeTag = `<span class="text-[9px] bg-amber-500/25 text-amber-300 px-1.5 py-0.2 rounded font-bold border border-amber-500/40">LEISURE (1 hr) ⚽</span>`;
                 }
 
                 html += `
@@ -3111,7 +3039,9 @@
       }
 
       if (totalHoursSpan) {
-        totalHoursSpan.innerText = `Total: ${entries.length} teaching hours / week (3 hrs on active days)`;
+        const facTheoryCount = entries.filter(e => !e.is_lab && !e.is_leisure).length;
+        const facLabCount = entries.filter(e => e.is_lab).length;
+        totalHoursSpan.innerText = `Total: ${entries.length} teaching hours / week (${facTheoryCount} Theory Classes [1h] + ${facLabCount} Practical Lab Hours [2h/3h] • Strictly 3 hrs on active days)`;
       }
 
       const activeDays = facultyViewScope === "DAY" ? [days[facultySelectedDay]] : days;
@@ -3158,12 +3088,21 @@
             const match = entries.find(e => e.day_of_week === dIdx && e.slot_index === slot.index);
             if (match) {
               const isLab = match.is_lab;
+              let labDurationStr = "1 hr";
+              if (isLab) {
+                const sameLab = entries.filter(e => e.day_of_week === dIdx && e.is_lab && e.subject_code === match.subject_code);
+                labDurationStr = (sameLab.length >= 3 || (dIdx === 0 || dIdx === 2 || dIdx === 4)) ? "3 hrs" : "2 hrs";
+              }
+              const typeBadge = isLab 
+                ? `<span class="text-[9px] bg-emerald-500/25 text-emerald-300 px-1.5 py-0.2 rounded font-bold border border-emerald-500/40">LAB (${labDurationStr}) 🔬</span>`
+                : `<span class="text-[9px] bg-indigo-500/25 text-indigo-300 px-1.5 py-0.2 rounded font-bold border border-indigo-500/40">THEORY (1 hr)</span>`;
+
               html += `
                 <div class="p-2.5 rounded-xl border ${isLab ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-200 border-l-4 border-l-emerald-500' : 'bg-indigo-950/40 border-indigo-500/40 text-indigo-200 border-l-4 border-l-indigo-500'} shadow-sm text-left hover:scale-[1.01] transition-transform">
                   <div class="font-bold text-[var(--text-main)] flex items-center justify-between">
                     <span class="font-mono">${escapeHtml(match.subject_code)}</span>
                     <div class="flex gap-1">
-                      <span class="text-[9px] ${isLab ? 'bg-emerald-500/25 text-emerald-300' : 'bg-indigo-500/25 text-indigo-300'} px-1.5 py-0.2 rounded font-bold">${isLab ? 'LAB' : 'THEORY'}</span>
+                      ${typeBadge}
                       <span class="text-[9px] bg-amber-500/25 text-amber-300 px-1.5 py-0.2 rounded font-bold">Sec ${escapeHtml(match.section_name)}</span>
                     </div>
                   </div>
@@ -3459,9 +3398,9 @@
           facultyUsers = data.faculty.map(f => ({
             id: f.id,
             email: f.email,
-            name: f.name,
-            deptId: f.department_id || 1,
-            deptCode: f.department_code || "CSE",
+            name: f.name || f.full_name,
+            deptId: Number(f.department_id || f.deptId || 1),
+            deptCode: f.department_code || f.deptCode || "CSE",
             role: "FACULTY"
           }));
         }
@@ -3502,10 +3441,27 @@
         // Repopulate UI dropdowns
         const filterFac = document.getElementById("filter-faculty");
         if (filterFac) {
+          const currentFilter = filterFac.value;
           filterFac.innerHTML = `<option value="">All Faculty (${facultyUsers.length})</option>`;
           facultyUsers.forEach(f => {
             filterFac.innerHTML += `<option value="${escapeHtml(f.id)}">${escapeHtml(f.name)} (${escapeHtml(f.deptCode)})</option>`;
           });
+          if (currentFilter) filterFac.value = currentFilter;
+        }
+
+        const facAdminSelect = document.getElementById("fac-admin-select-user");
+        if (facAdminSelect) {
+          const currentAdminVal = facAdminSelect.value;
+          facAdminSelect.innerHTML = "";
+          facultyUsers.forEach(f => {
+            const opt = document.createElement("option");
+            opt.value = f.id;
+            opt.textContent = `${f.name} (${f.deptCode})`;
+            facAdminSelect.appendChild(opt);
+          });
+          if (currentAdminVal && facultyUsers.some(f => f.id === currentAdminVal)) {
+            facAdminSelect.value = currentAdminVal;
+          }
         }
         onAdminDeptChanged();
         onAdminSemChanged();

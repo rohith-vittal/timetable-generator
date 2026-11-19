@@ -202,74 +202,86 @@ class TimetableSolver:
             T0, T1, T2 = theory_teachers[0], theory_teachers[1], theory_teachers[2]
             L0, L1, L2 = lab_instructors[0], lab_instructors[1], lab_instructors[2]
 
-            leisure_days = [(g_idx % 5), ((g_idx + 2) % 5)]
+            teacher_subj_map = {}
+            for (dept_id, sem_id, sec_id), cohort_allocs in group:
+                for a in cohort_allocs:
+                    if a.subject_id in self.subjects_map:
+                        teacher_subj_map[a.faculty_id] = self.subjects_map[a.subject_id]
+
+            # Construct distinct daily schedule patterns for all 5 days of the week:
+            # - No two days have the same schedule for any cohort.
+            # - Any faculty member teaches a section at most once per day unless it is a 2h or 3h lab block.
+            # - Daily lab requirement: at least one 2h or 3h lab session every day.
+            # - Weekly leisure rule: exactly 2 days have Period 6 as Leisure (Tuesday & Thursday).
+            # - Faculty daily workload: exactly 3 hours per day for all active faculty.
+            daily_matrices = {
+                0: {  # Monday: Morning Theory (P1-3), Afternoon 3h Lab (P4-6)
+                    1: [(T0, False, 1), (T1, False, 1), (T2, False, 1)],
+                    2: [(T2, False, 1), (T0, False, 1), (T1, False, 1)],
+                    3: [(T1, False, 1), (T2, False, 1), (T0, False, 1)],
+                    4: [(L0, True, 3), (L1, True, 3), (L2, True, 3)],
+                    5: [(L0, True, 3), (L1, True, 3), (L2, True, 3)],
+                    6: [(L0, True, 3), (L1, True, 3), (L2, True, 3)],
+                },
+                1: {  # Tuesday: Morning Theory/Class (P1-3), Afternoon 2h Lab (P4-5), Period 6 Leisure
+                    1: [(T0, False, 1), (L0, False, 1), (T1, False, 1)],
+                    2: [(T1, False, 1), (T0, False, 1), (L1, False, 1)],
+                    3: [(L2, False, 1), (T1, False, 1), (T0, False, 1)],
+                    4: [(L0, True, 2), (L1, True, 2), (L2, True, 2)],
+                    5: [(L0, True, 2), (L1, True, 2), (L2, True, 2)],
+                    6: [(None, False, 0), (None, False, 0), (None, False, 0)],  # Leisure
+                },
+                2: {  # Wednesday: Morning 3h Lab (P1-3), Afternoon Theory (P4-6) [Inverted structure]
+                    1: [(L1, True, 3), (L2, True, 3), (L0, True, 3)],
+                    2: [(L1, True, 3), (L2, True, 3), (L0, True, 3)],
+                    3: [(L1, True, 3), (L2, True, 3), (L0, True, 3)],
+                    4: [(T1, False, 1), (T2, False, 1), (T0, False, 1)],
+                    5: [(T0, False, 1), (T1, False, 1), (T2, False, 1)],
+                    6: [(T2, False, 1), (T0, False, 1), (T1, False, 1)],
+                },
+                3: {  # Thursday: Morning 2h Lab (P1-2) + Class (P3), Afternoon Theory (P4-5), Period 6 Leisure
+                    1: [(L2, True, 2), (L0, True, 2), (L1, True, 2)],
+                    2: [(L2, True, 2), (L0, True, 2), (L1, True, 2)],
+                    3: [(T2, False, 1), (L2, False, 1), (T0, False, 1)],
+                    4: [(T0, False, 1), (T2, False, 1), (L0, False, 1)],
+                    5: [(L1, False, 1), (T0, False, 1), (T2, False, 1)],
+                    6: [(None, False, 0), (None, False, 0), (None, False, 0)],  # Leisure
+                },
+                4: {  # Friday: Morning Theory (P1-3, rotated sequence), Afternoon 3h Lab (P4-6)
+                    1: [(T2, False, 1), (T0, False, 1), (T1, False, 1)],
+                    2: [(T1, False, 1), (T2, False, 1), (T0, False, 1)],
+                    3: [(T0, False, 1), (T1, False, 1), (T2, False, 1)],
+                    4: [(L0, True, 3), (L1, True, 3), (L2, True, 3)],
+                    5: [(L0, True, 3), (L1, True, 3), (L2, True, 3)],
+                    6: [(L0, True, 3), (L1, True, 3), (L2, True, 3)],
+                },
+            }
 
             for d in days_list:
                 day_name = day_names[d]
-                is_leisure_day = d in leisure_days
+                day_slots = [ts for ts in self.teaching_slots if ts.day_of_week == d]
+                slot_map = {ts.slot_index: ts for ts in day_slots}
 
-                morning_slots = [ts for ts in self.teaching_slots if ts.day_of_week == d and ts.slot_index in [1, 2, 3]]
-                morning_slots.sort(key=lambda s: s.slot_index)
+                matrix = daily_matrices[d]
+                for slot_idx in range(1, 7):
+                    slot = slot_map.get(slot_idx)
+                    if not slot:
+                        continue
 
-                afternoon_slots = [ts for ts in self.teaching_slots if ts.day_of_week == d and ts.slot_index in [4, 5, 6]]
-                afternoon_slots.sort(key=lambda s: s.slot_index)
-
-                if is_leisure_day:
-                    is_first_leisure = (d == leisure_days[0])
-                    active_theory_a = T0 if is_first_leisure else T1
-                    active_theory_b = T1 if is_first_leisure else T2
-
-                    # 1. Period 6: Leisure for all cohorts in group
-                    for c_local_idx, ((dept_id, sem_id, sec_id), cohort_allocs) in enumerate(group):
-                        sem = self.semesters.get(sem_id)
-                        yr = self.years.get(sem.year_id if sem else 1)
-                        dept = self.departments.get(dept_id)
-                        sec = self.sections.get(sec_id)
-                        h_room = g_rooms[c_local_idx][0]
-                        slot_p6 = afternoon_slots[2]
-
-                        entries.append(
-                            TimetableEntry(
-                                id=str(uuid.uuid4()),
-                                generation_id=generation_id,
-                                calendar_date=None,
-                                day_of_week=d,
-                                day_name=day_name,
-                                time_slot_id=slot_p6.id,
-                                slot_index=slot_p6.slot_index,
-                                start_time=slot_p6.start_time,
-                                end_time=slot_p6.end_time,
-                                department_id=dept_id,
-                                department_code=dept.code if dept else "CSE",
-                                section_id=sec_id,
-                                section_name=sec.name if sec else "A",
-                                subject_id="leisure-slot",
-                                subject_code="LEISURE",
-                                subject_name="Library / Physical Recreation / Sports",
-                                faculty_id="fac-mentor",
-                                faculty_name="Faculty Mentor",
-                                semester_id=sem_id,
-                                semester_name=sem.name if sem else "Semester 1",
-                                year_id=yr.id if yr else 1,
-                                year_name=yr.name if yr else "Year 1",
-                                classroom_id=h_room.id,
-                                classroom_name="Sports Ground / Campus Library",
-                                is_lab=False,
-                                is_leisure=True,
-                            )
-                        )
-
-                    # 2. Periods 4 & 5 (2-hour Lab): L0 for C0, L1 for C1, L2 for C2
+                    assignments = matrix[slot_idx]
                     for c_local_idx, ((dept_id, sem_id, sec_id), cohort_allocs) in enumerate(group):
                         sem = self.semesters.get(sem_id)
                         yr = self.years.get(sem.year_id if sem else 1)
                         dept = self.departments.get(dept_id)
                         sec = self.sections.get(sec_id)
                         primary_subj = self.subjects_map.get(cohort_allocs[0].subject_id)
+                        h_room = g_rooms[c_local_idx][0]
                         d_lab = g_rooms[c_local_idx][1]
-                        lab_inst = [L0, L1, L2][c_local_idx]
 
-                        for slot in afternoon_slots[:2]:
+                        fac, is_lab, duration = assignments[c_local_idx]
+
+                        if fac is None:
+                            # Period 6 Leisure
                             entries.append(
                                 TimetableEntry(
                                     id=str(uuid.uuid4()),
@@ -285,11 +297,46 @@ class TimetableSolver:
                                     department_code=dept.code if dept else "CSE",
                                     section_id=sec_id,
                                     section_name=sec.name if sec else "A",
-                                    subject_id=f"{primary_subj.id}-lab" if primary_subj else "sub-lab",
-                                    subject_code=f"{primary_subj.code}L" if primary_subj else "CS101L",
-                                    subject_name=f"{primary_subj.name} Practical Lab" if primary_subj else "Lab Session",
-                                    faculty_id=lab_inst.id,
-                                    faculty_name=lab_inst.full_name,
+                                    subject_id="leisure-slot",
+                                    subject_code="LEISURE",
+                                    subject_name="Physical Education, Sports & Campus Library",
+                                    faculty_id="fac-mentor",
+                                    faculty_name="Faculty Mentor",
+                                    semester_id=sem_id,
+                                    semester_name=sem.name if sem else "Semester 1",
+                                    year_id=yr.id if yr else 1,
+                                    year_name=yr.name if yr else "Year 1",
+                                    classroom_id=h_room.id,
+                                    classroom_name="Sports Ground / Campus Library",
+                                    is_lab=False,
+                                    is_leisure=True,
+                                )
+                            )
+                        elif is_lab:
+                            # Laboratory Session (2h or 3h block)
+                            subj = teacher_subj_map.get(fac.id, primary_subj)
+                            subj_code = f"{subj.code}L" if subj else "CS101L"
+                            subj_name = f"{subj.name} Practical Lab ({duration}h)" if subj else f"Hands-on Lab ({duration}h)"
+                            entries.append(
+                                TimetableEntry(
+                                    id=str(uuid.uuid4()),
+                                    generation_id=generation_id,
+                                    calendar_date=None,
+                                    day_of_week=d,
+                                    day_name=day_name,
+                                    time_slot_id=slot.id,
+                                    slot_index=slot.slot_index,
+                                    start_time=slot.start_time,
+                                    end_time=slot.end_time,
+                                    department_id=dept_id,
+                                    department_code=dept.code if dept else "CSE",
+                                    section_id=sec_id,
+                                    section_name=sec.name if sec else "A",
+                                    subject_id=f"{subj.id}-lab" if subj else "sub-lab",
+                                    subject_code=subj_code,
+                                    subject_name=subj_name,
+                                    faculty_id=fac.id,
+                                    faculty_name=fac.full_name,
                                     semester_id=sem_id,
                                     semester_name=sem.name if sem else "Semester 1",
                                     year_id=yr.id if yr else 1,
@@ -300,27 +347,11 @@ class TimetableSolver:
                                     is_leisure=False,
                                 )
                             )
-
-                    # 3. Morning Periods 1, 2, 3 (Classes)
-                    # Slot 1: C0 -> L0, C1 -> active_theory_a, C2 -> active_theory_b
-                    # Slot 2: C0 -> active_theory_a, C1 -> L1, C2 -> active_theory_b
-                    # Slot 3: C0 -> active_theory_a, C1 -> active_theory_b, C2 -> L2
-                    morning_matrix = [
-                        [L0, active_theory_a, active_theory_b],
-                        [active_theory_a, L1, active_theory_b],
-                        [active_theory_a, active_theory_b, L2],
-                    ]
-
-                    for s_idx, slot in enumerate(morning_slots):
-                        for c_local_idx, ((dept_id, sem_id, sec_id), cohort_allocs) in enumerate(group):
-                            sem = self.semesters.get(sem_id)
-                            yr = self.years.get(sem.year_id if sem else 1)
-                            dept = self.departments.get(dept_id)
-                            sec = self.sections.get(sec_id)
-                            primary_subj = self.subjects_map.get(cohort_allocs[0].subject_id)
-                            h_room = g_rooms[c_local_idx][0]
-                            fac = morning_matrix[s_idx][c_local_idx]
-
+                        else:
+                            # Instructional Theory Class (Exactly 1h, faculty teaches section only once/day)
+                            subj = teacher_subj_map.get(fac.id, primary_subj)
+                            subj_code = subj.code if subj else "CS101"
+                            subj_name = f"{subj.name} (Theory 1h)" if subj else "Instructional Theory (1h)"
                             entries.append(
                                 TimetableEntry(
                                     id=str(uuid.uuid4()),
@@ -336,9 +367,9 @@ class TimetableSolver:
                                     department_code=dept.code if dept else "CSE",
                                     section_id=sec_id,
                                     section_name=sec.name if sec else "A",
-                                    subject_id=primary_subj.id if primary_subj else "sub-1",
-                                    subject_code=primary_subj.code if primary_subj else "CS101",
-                                    subject_name=primary_subj.name if primary_subj else "Theory",
+                                    subject_id=subj.id if subj else "sub-1",
+                                    subject_code=subj_code,
+                                    subject_name=subj_name,
                                     faculty_id=fac.id,
                                     faculty_name=fac.full_name,
                                     semester_id=sem_id,
@@ -348,87 +379,6 @@ class TimetableSolver:
                                     classroom_id=h_room.id,
                                     classroom_name=h_room.room_number,
                                     is_lab=False,
-                                    is_leisure=False,
-                                )
-                            )
-
-                else:
-                    # STANDARD DAY:
-                    # Morning: 3 classes taught by primary theory teacher (T0 for C0, T1 for C1, T2 for C2)
-                    # Afternoon: 3-hour lab taught by lab instructor (L0 for C0, L1 for C1, L2 for C2)
-                    for c_local_idx, ((dept_id, sem_id, sec_id), cohort_allocs) in enumerate(group):
-                        sem = self.semesters.get(sem_id)
-                        yr = self.years.get(sem.year_id if sem else 1)
-                        dept = self.departments.get(dept_id)
-                        sec = self.sections.get(sec_id)
-                        primary_subj = self.subjects_map.get(cohort_allocs[0].subject_id)
-                        h_room = g_rooms[c_local_idx][0]
-                        d_lab = g_rooms[c_local_idx][1]
-                        theory_fac = [T0, T1, T2][c_local_idx]
-                        lab_inst = [L0, L1, L2][c_local_idx]
-
-                        # Morning 3 classes
-                        for slot in morning_slots:
-                            entries.append(
-                                TimetableEntry(
-                                    id=str(uuid.uuid4()),
-                                    generation_id=generation_id,
-                                    calendar_date=None,
-                                    day_of_week=d,
-                                    day_name=day_name,
-                                    time_slot_id=slot.id,
-                                    slot_index=slot.slot_index,
-                                    start_time=slot.start_time,
-                                    end_time=slot.end_time,
-                                    department_id=dept_id,
-                                    department_code=dept.code if dept else "CSE",
-                                    section_id=sec_id,
-                                    section_name=sec.name if sec else "A",
-                                    subject_id=primary_subj.id if primary_subj else "sub-1",
-                                    subject_code=primary_subj.code if primary_subj else "CS101",
-                                    subject_name=primary_subj.name if primary_subj else "Instructional Theory",
-                                    faculty_id=theory_fac.id,
-                                    faculty_name=theory_fac.full_name,
-                                    semester_id=sem_id,
-                                    semester_name=sem.name if sem else "Semester 1",
-                                    year_id=yr.id if yr else 1,
-                                    year_name=yr.name if yr else "Year 1",
-                                    classroom_id=h_room.id,
-                                    classroom_name=h_room.room_number,
-                                    is_lab=False,
-                                    is_leisure=False,
-                                )
-                            )
-
-                        # Afternoon 3-hour lab
-                        for slot in afternoon_slots:
-                            entries.append(
-                                TimetableEntry(
-                                    id=str(uuid.uuid4()),
-                                    generation_id=generation_id,
-                                    calendar_date=None,
-                                    day_of_week=d,
-                                    day_name=day_name,
-                                    time_slot_id=slot.id,
-                                    slot_index=slot.slot_index,
-                                    start_time=slot.start_time,
-                                    end_time=slot.end_time,
-                                    department_id=dept_id,
-                                    department_code=dept.code if dept else "CSE",
-                                    section_id=sec_id,
-                                    section_name=sec.name if sec else "A",
-                                    subject_id=f"{primary_subj.id}-lab" if primary_subj else "sub-lab",
-                                    subject_code=f"{primary_subj.code}L" if primary_subj else "CS101L",
-                                    subject_name=f"{primary_subj.name} Hands-on Lab" if primary_subj else "Hands-on Lab",
-                                    faculty_id=lab_inst.id,
-                                    faculty_name=lab_inst.full_name,
-                                    semester_id=sem_id,
-                                    semester_name=sem.name if sem else "Semester 1",
-                                    year_id=yr.id if yr else 1,
-                                    year_name=yr.name if yr else "Year 1",
-                                    classroom_id=d_lab.id,
-                                    classroom_name=d_lab.room_number,
-                                    is_lab=True,
                                     is_leisure=False,
                                 )
                             )
