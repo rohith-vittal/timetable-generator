@@ -581,7 +581,7 @@
             class="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs flex items-start gap-2.5">
             <span class="text-base shrink-0 mt-0.5">ℹ️</span>
             <p id="login-role-description" class="leading-relaxed font-medium">
-              Sign in as a faculty member to select semester subjects and view your personal 3-hour daily timetable.
+              Sign in as a faculty member to view your personal schedule and preferences. <br><span class="opacity-80">Quick demo: <button type="button" onclick="quickLogin('grace.hopper@univ.edu', 'faculty123', 'FACULTY')" class="underline font-bold text-indigo-300 hover:text-white">grace.hopper@univ.edu</button> • Password: <strong>faculty123</strong> (Click to autofill)</span>
             </p>
           </div>
 
@@ -646,6 +646,7 @@
               <select id="reg-role" onchange="onRegisterRoleChanged()"
                 class="glass-input w-full rounded-xl p-3 text-xs outline-none">
                 <option value="FACULTY">Faculty Member (Teacher)</option>
+                <option value="ADMIN">Administrator (Scheduler / Dean)</option>
               </select>
             </div>
 
@@ -1924,7 +1925,6 @@
             });
           });
         }
-        }
       });
 
       if (scope === "DAY") {
@@ -2107,12 +2107,12 @@
       if (role === "FACULTY") {
         tabFac.className = "py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all flex items-center justify-center gap-2";
         tabAdm.className = "py-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex items-center justify-center gap-2";
-        desc.innerText = "Sign in as a faculty member to select semester subjects and view your personal 3-hour daily timetable.";
+        desc.innerHTML = `Sign in as a faculty member to view your personal schedule and preferences. <br><span class="opacity-80">Quick demo: <button type="button" onclick="quickLogin('grace.hopper@univ.edu', 'faculty123', 'FACULTY')" class="underline font-bold text-indigo-300 hover:text-white">grace.hopper@univ.edu</button> • Password: <strong>faculty123</strong> (Click to autofill)</span>`;
         emailInput.placeholder = "grace.hopper@univ.edu";
       } else {
         tabAdm.className = "py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all flex items-center justify-center gap-2";
         tabFac.className = "py-2.5 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all flex items-center justify-center gap-2";
-        desc.innerText = "Sign in as an administrator to allocate classes, configure 6 sections, trigger generation, or consult ChronoBot.";
+        desc.innerHTML = `Sign in as an administrator to allocate classes, configure sections, and trigger generation. <br><span class="opacity-80">Quick demo: <button type="button" onclick="quickLogin('admin@university.edu', 'admin123', 'ADMIN')" class="underline font-bold text-indigo-300 hover:text-white">admin@university.edu</button> • Password: <strong>admin123</strong> (Click to autofill)</span>`;
         emailInput.placeholder = "admin@university.edu";
       }
     }
@@ -2196,10 +2196,6 @@
     async function handleRegistrationSubmit(e) {
       e.preventDefault();
       const role = document.getElementById("reg-role").value;
-      if (role !== "FACULTY") {
-        showStatus("Administrator accounts must be provisioned securely by an existing administrator.", "error");
-        return;
-      }
       const name = document.getElementById("reg-name").value.trim();
       const email = document.getElementById("reg-email").value.trim().toLowerCase();
       const pwd = document.getElementById("reg-password").value;

@@ -54,6 +54,15 @@
       "department": "Computer Science & Engineering",
       "department_code": "CSE",
       "password": "pbkdf2:d0eba695e512d65c976f5cd855376687c2fb77133193b3901b033853ea5967af"
+    },
+    "u-faculty-be63c910": {
+      "id": "u-faculty-be63c910",
+      "email": "vittalrohith104@gmail.com",
+      "full_name": "rohith",
+      "role": "FACULTY",
+      "department": "Computer Science & Engineering",
+      "department_code": "CSE",
+      "password": "pbkdf2:878b4b9c076fb4db3022d3afa09f958942dd178bd1feeb17ee94ec2968f7aaaf"
     }
   },
   "allocations": {

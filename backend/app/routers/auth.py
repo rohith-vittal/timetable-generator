@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 import uuid
 
 from app.schemas import LoginRequest, LoginResponse, UserProfile, RegisterRequest
+from app.models import User
+from app.auth_deps import get_current_user
 from app.storage import db
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication & Access Control"])
@@ -60,9 +62,10 @@ def register(payload: RegisterRequest):
 )
 def login(payload: LoginRequest):
     # Find user by email
+    clean_email = payload.email.strip().lower()
     matched_user = None
     for u in db.users.values():
-        if u.email.lower() == payload.email.lower():
+        if u.email.strip().lower() == clean_email:
             matched_user = u
             break
 
@@ -102,6 +105,28 @@ def login(payload: LoginRequest):
             department_code=matched_user.department_code,
             department_id=user_dept_id,
         )
+    )
+
+@router.get(
+    "/me",
+    response_model=UserProfile,
+    summary="Get Current Authenticated User Profile"
+)
+def get_me(user: User = Depends(get_current_user)):
+    user_dept_id = None
+    for d in db.departments.values():
+        if d.code == user.department_code or d.name == user.department:
+            user_dept_id = d.id
+            break
+    return UserProfile(
+        id=user.id,
+        email=user.email,
+        full_name=user.full_name,
+        name=user.full_name,
+        role=user.role,
+        department=user.department,
+        department_code=user.department_code,
+        department_id=user_dept_id,
     )
 
 @router.get(
