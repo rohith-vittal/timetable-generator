@@ -1,87 +1,23 @@
 {
   "is_custom_data": false,
-  "custom_users": {
-    "u-faculty-4f984803": {
-      "id": "u-faculty-4f984803",
-      "email": "sarah.connor@univ.edu",
-      "full_name": "Dr. Sarah Connor",
-      "role": "FACULTY",
-      "department": "Computer Science & Engineering",
-      "department_code": "CSE",
-      "password": "pbkdf2:13bf13e29d1b27c2a54acad7c3a74bb55bd93d0133552b8ac2ffb4bffbc78a22"
-    },
-    "u-admin-d7122ad7": {
-      "id": "u-admin-d7122ad7",
-      "email": "admin.assistant@university.edu",
-      "full_name": "Marcus Wright",
-      "role": "ADMIN",
-      "department": "Academic Affairs",
-      "department_code": "ALL",
-      "password": "pbkdf2:47737dcb91a54a867f911c2bf27b4ac4aedf229544b150d3213bb09e6e3b294b"
-    },
-    "u-faculty-6cfac68b": {
-      "id": "u-faculty-6cfac68b",
-      "email": "dr.neumann@apex.edu",
-      "full_name": "Dr. John von Neumann",
-      "role": "FACULTY",
-      "department": "Computer Science & Engineering",
-      "department_code": "CSE",
-      "password": "pbkdf2:d0eba695e512d65c976f5cd855376687c2fb77133193b3901b033853ea5967af"
-    },
-    "u-faculty-6b29c7e5": {
-      "id": "u-faculty-6b29c7e5",
-      "email": "dr.neumann.83d149@apex.edu",
-      "full_name": "Dr. John von Neumann",
-      "role": "FACULTY",
-      "department": "Computer Science & Engineering",
-      "department_code": "CSE",
-      "password": "pbkdf2:d0eba695e512d65c976f5cd855376687c2fb77133193b3901b033853ea5967af"
-    },
-    "u-faculty-b273a817": {
-      "id": "u-faculty-b273a817",
-      "email": "dr.neumann.431996@apex.edu",
-      "full_name": "Dr. John von Neumann",
-      "role": "FACULTY",
-      "department": "Computer Science & Engineering",
-      "department_code": "CSE",
-      "password": "pbkdf2:d0eba695e512d65c976f5cd855376687c2fb77133193b3901b033853ea5967af"
-    },
-    "u-faculty-16ea8f11": {
-      "id": "u-faculty-16ea8f11",
-      "email": "dr.neumann.42b4d2@apex.edu",
-      "full_name": "Dr. John von Neumann",
-      "role": "FACULTY",
-      "department": "Computer Science & Engineering",
-      "department_code": "CSE",
-      "password": "pbkdf2:d0eba695e512d65c976f5cd855376687c2fb77133193b3901b033853ea5967af"
-    },
-    "u-faculty-be63c910": {
-      "id": "u-faculty-be63c910",
-      "email": "vittalrohith104@gmail.com",
-      "full_name": "rohith",
-      "role": "FACULTY",
-      "department": "Computer Science & Engineering",
-      "department_code": "CSE",
-      "password": "pbkdf2:878b4b9c076fb4db3022d3afa09f958942dd178bd1feeb17ee94ec2968f7aaaf"
-    }
-  },
+  "custom_users": {},
   "allocations": {
-    "alloc-dc2826a1": {
-      "id": "alloc-dc2826a1",
+    "alloc-46572da2": {
+      "id": "alloc-46572da2",
       "faculty_id": "fac-cse-01",
       "subject_id": "sub-cs-101",
       "department_id": 1,
       "department_code": "CSE",
       "year_id": 1,
       "semester_id": 1,
-      "section_id": 2,
-      "section_name": "B",
+      "section_id": 1,
+      "section_name": "A",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-11-19 10:34:07.165677"
+      "created_at": "2026-11-27 05:03:43.687981+00:00"
     },
-    "alloc-60299f78": {
-      "id": "alloc-60299f78",
+    "alloc-b7c295c1": {
+      "id": "alloc-b7c295c1",
       "faculty_id": "fac-cse-02",
       "subject_id": "sub-cs-201",
       "department_id": 1,
@@ -92,10 +28,10 @@
       "section_name": "B",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017217"
+      "created_at": "2026-11-27 05:03:43.688024+00:00"
     },
-    "alloc-3c4f6a25": {
-      "id": "alloc-3c4f6a25",
+    "alloc-63c82d66": {
+      "id": "alloc-63c82d66",
       "faculty_id": "fac-cse-03",
       "subject_id": "sub-cs-301",
       "department_id": 1,
@@ -106,10 +42,10 @@
       "section_name": "A",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017222"
+      "created_at": "2026-11-27 05:03:43.688044+00:00"
     },
-    "alloc-91906a65": {
-      "id": "alloc-91906a65",
+    "alloc-63960c1b": {
+      "id": "alloc-63960c1b",
       "faculty_id": "fac-ece-01",
       "subject_id": "sub-ec-201",
       "department_id": 2,
@@ -120,10 +56,10 @@
       "section_name": "C",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017224"
+      "created_at": "2026-11-27 05:03:43.688060+00:00"
     },
-    "alloc-6c313447": {
-      "id": "alloc-6c313447",
+    "alloc-55dc7aeb": {
+      "id": "alloc-55dc7aeb",
       "faculty_id": "fac-ece-02",
       "subject_id": "sub-ec-101",
       "department_id": 2,
@@ -134,24 +70,24 @@
       "section_name": "D",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017227"
+      "created_at": "2026-11-27 05:03:43.688075+00:00"
     },
-    "alloc-246b5fbc": {
-      "id": "alloc-246b5fbc",
+    "alloc-5a8f3c45": {
+      "id": "alloc-5a8f3c45",
       "faculty_id": "fac-eee-01",
-      "subject_id": "sub-cs-101",
-      "department_id": 1,
-      "department_code": "CSE",
-      "year_id": 1,
-      "semester_id": 1,
-      "section_id": 1,
-      "section_name": "A",
+      "subject_id": "sub-ee-201",
+      "department_id": 3,
+      "department_code": "EEE",
+      "year_id": 2,
+      "semester_id": 3,
+      "section_id": 4,
+      "section_name": "D",
       "academic_year_id": 1,
-      "allocated_by": "FACULTY",
-      "created_at": "2026-11-13 02:59:30.961972"
+      "allocated_by": "ADMIN",
+      "created_at": "2026-11-27 05:03:43.688087+00:00"
     },
-    "alloc-64de1858": {
-      "id": "alloc-64de1858",
+    "alloc-bea1db47": {
+      "id": "alloc-bea1db47",
       "faculty_id": "fac-eee-02",
       "subject_id": "sub-ee-101",
       "department_id": 3,
@@ -162,10 +98,10 @@
       "section_name": "E",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017231"
+      "created_at": "2026-11-27 05:03:43.688101+00:00"
     },
-    "alloc-2190bc76": {
-      "id": "alloc-2190bc76",
+    "alloc-2d88b88e": {
+      "id": "alloc-2d88b88e",
       "faculty_id": "fac-mech-01",
       "subject_id": "sub-me-201",
       "department_id": 4,
@@ -176,10 +112,10 @@
       "section_name": "E",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017233"
+      "created_at": "2026-11-27 05:03:43.688117+00:00"
     },
-    "alloc-bc000d57": {
-      "id": "alloc-bc000d57",
+    "alloc-16b4c932": {
+      "id": "alloc-16b4c932",
       "faculty_id": "fac-mech-02",
       "subject_id": "sub-me-101",
       "department_id": 4,
@@ -190,18 +126,18 @@
       "section_name": "F",
       "academic_year_id": 1,
       "allocated_by": "ADMIN",
-      "created_at": "2026-10-23 10:24:08.017234"
+      "created_at": "2026-11-27 05:03:43.688129+00:00"
     }
   },
   "faculty_allocation_map": {
-    "fac-cse-01": "alloc-dc2826a1",
-    "fac-cse-02": "alloc-60299f78",
-    "fac-cse-03": "alloc-3c4f6a25",
-    "fac-ece-01": "alloc-91906a65",
-    "fac-ece-02": "alloc-6c313447",
-    "fac-eee-01": "alloc-246b5fbc",
-    "fac-eee-02": "alloc-64de1858",
-    "fac-mech-01": "alloc-2190bc76",
-    "fac-mech-02": "alloc-bc000d57"
+    "fac-cse-01": "alloc-46572da2",
+    "fac-cse-02": "alloc-b7c295c1",
+    "fac-cse-03": "alloc-63c82d66",
+    "fac-ece-01": "alloc-63960c1b",
+    "fac-ece-02": "alloc-55dc7aeb",
+    "fac-eee-01": "alloc-5a8f3c45",
+    "fac-eee-02": "alloc-bea1db47",
+    "fac-mech-01": "alloc-2d88b88e",
+    "fac-mech-02": "alloc-16b4c932"
   }
 }
